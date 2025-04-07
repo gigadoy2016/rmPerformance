@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/exceljs/dist/exceljs.min.js"></script>
+    <script>
+      function createExcelFile() {
+        const ExcelJS = window.ExcelJS;
+  
+        // สร้าง workbook ใหม่
+        const workbook = new ExcelJS.Workbook();
+  
+        // เพิ่ม sheet ใหม่
+        const worksheet = workbook.addWorksheet('Sheet 1');
+  
+        // กำหนดหัวตาราง
+        worksheet.columns = [
+          { header: 'col1', key: 'col1', width: 10 },
+          { header: 'col2', key: 'col2', width: 10 },
+          { header: 'col3', key: 'col3', width: 10 },
+          { header: 'col4', key: 'col4', width: 10 },
+        ];
+  
+        // เพิ่มข้อมูลลงในตาราง
+        worksheet.addRow(['A', 10, 20, 30]);
+        worksheet.addRow(['B', 10, 20, 30]);
+        worksheet.addRow(['C', 10, 20, 30]);
+        worksheet.addRow(['D', 10, 20, 30]);
+  
+        // สร้างไฟล์ Excel
+        workbook.xlsx.writeBuffer()
+          .then((buffer) => {
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'data.xlsx';
+            link.click();
+            URL.revokeObjectURL(url);
+            console.log('Excel file created successfully!');
+          })
+          .catch((error) => {
+            console.error('Error creating Excel file:', error);
+          });
+      }
+
+    </script>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <th>col1</th>
+        <th>col2</th>
+        <th>col3</th>
+        <th>col4</th>
+      </tr>
+      <tr>
+        <td>A</td>
+        <td>10</td>
+        <td>20</td>
+        <td>30</td>
+      </tr>
+      <tr>
+        <td>B</td>
+        <td>10</td>
+        <td>20</td>
+        <td>30</td>
+      </tr>
+      <tr>
+        <td>C</td>
+        <td>10</td>
+        <td>20</td>
+        <td>30</td>
+      </tr>
+      <tr>
+        <td>D</td>
+        <td>10</td>
+        <td>20</td>
+        <td>30</td>
+      </tr>
+    </table>
+    <div>
+      <button id="submit" onclick="createExcelFile();">submit</button>
+    </div>
+  </body>
+</html>

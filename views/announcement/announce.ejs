@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='../css/mycss.css' />
+    <style>
+      .announce{
+        padding: 0.5em;
+      }
+
+      table.ann{
+        border-collapse: collapse;
+        width: 80%;
+      }
+      th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th, td a{
+        color: black;
+      }
+      tr:hover {background-color: gainsboro;}
+
+    </style>
+  </head>
+  <body>
+    <%- include('../navigator/nav_lv1') %>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <div>
+
+      <table class="ann">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>เรื่อง..</th>
+            <th>ประกาศเมื่อ</th>
+            <th>ผู้อนุมัติ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1.</td>
+            <td><a href="../html/doc/01.pdf" target="_blank">นโยบายมาตรการและวิธีปฏิบัติในการมอบหมายให้บุคคลอื่นเป็นผู้รับดำเนินการ</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>2.</td>
+            <td><a href="../html/doc/02.pdf" target="_blank">นโยบายและมาตรการในการป้องกันและจัดการความขัดแย้งทางผลประโยชน์</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>3.</td>
+            <td><a href="../html/doc/03.pdf" target="_blank">นโยบายการขายและให้บริการด้านผลิตภัณฑ์อย่างเป็นธรรม(Fair Dealing Policy)</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>4.</td>
+            <td><a href="../html/doc/04.pdf" target="_blank">นโยบายการคุ้มครองข้อมูลส่วนบุคคล</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>5.</td>
+            <td><a href="../html/doc/05.pdf" target="_blank">นโยบายการพนักงาน</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>6.</td>
+            <td><a href="../html/doc/06.นโยบายการคัดเลือกกองทุน(Poduct Screening Policy).pdf" target="_blank">นโยบายการคัดเลือกกองทุน(Poduct Screening Policy)</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>7.</td>
+            <td><a href="../html/doc/07.นโยบายการรับเรื่องร้องเรียน.pdf" target="_blank">นโยบายการรับเรื่องร้องเรียน</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>8.</td>
+            <td><a href="../html/doc/08.นโยบายบริหารความเสี่ยงองค์กร.pdf" target="_blank">นโยบายบริหารความเสี่ยงองค์กร</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>9.</td>
+            <td><a href="../html/doc/09.นโยบายการป้องกันและปราบปรามการฟอกเงิน.pdf" target="_blank">นโยบายการป้องกันและปราบปรามการฟอกเงิน</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>10.</td>
+            <td><a href="../html/doc/10.นโยบายด้านเทคโนโลยีสารสนเทศ.pdf" target="_blank">นโยบายด้านเทคโนโลยีสารสนเทศ</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>11.</td>
+            <td><a href="../html/doc/11.นโยบายแผนฉุกเฉิน(Business Continuity Plan).pdf" target="_blank">นโยบายแผนฉุกเฉิน(Business Continuity Plan)</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+          <tr>
+            <td>12.</td>
+            <td><a href="../html/doc/12.นโยบายCompliance Manual.pdf" target="_blank">นโยบายCompliance Manual</a></td>
+            <td>20-Feb-2567</td>
+            <td>ประธานเจ้าหน้าที่บริหาร</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

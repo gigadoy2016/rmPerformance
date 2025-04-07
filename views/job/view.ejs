@@ -1,0 +1,102 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <link rel='stylesheet' href='../../css/mycss.css' />
+        <link rel="stylesheet" href="../../css/bootstrap.min.css">
+        <link rel='stylesheet' href='../../css/ion.rangeSlider.min.css' />
+        <script src="../../js/jquery.js"></script>
+        <script src="../../js/jquery-ui/jquery-ui.js"></script>
+        <link rel="stylesheet" href="../../js/jquery-ui/jquery-ui.css">
+        <link rel="stylesheet" href="../../css/dataTables.css">
+    
+        <!-- Custom Theme Style -->
+        <link href="../../css/custom.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container body">
+            <div class="main_container" style="padding: 1em;">
+                <div class="row">
+                    <div class="col-md-10">
+                        <div class="x_panel">
+                            <div class="x_title">
+                                <h2>IC:<%=data.ic%><small><%=data.ownner%></small></h2>
+                                &nbsp;&nbsp;&nbsp;
+                                <button type="button" class="btn btn-round <%=show1.style%>"><%=show1.caption%></button>
+                                <div class="clearfix"></div>
+                            </div>
+                            <div class="x_content">
+                                <br />
+                                <div class="form-group row ">
+                                    <label class="control-label col-md-3 col-sm-3 ">Job ID</label>
+                                    <div class="col-md-3 col-sm-3 ">
+                                        <label class="form-control"><%=data.job_id%></label>
+                                    </div>
+                                </div>
+                                <div class="form-group row ">
+                                    <label class="control-label col-md-3 col-sm-3 ">ชื่อลูกค้า</label>
+                                    <div class="col-md-3 col-sm-3 ">
+                                        <label class="form-control"><%=data.customer_name%></label>
+                                    </div>
+                                </div>
+                                <!-- <div class="form-group row ">
+                                    <label class="control-label col-md-3 col-sm-3 ">หมายเลขบัตรประชาชน</label>
+                                    <div class="col-md-3 col-sm-3 ">
+                                        <label class="form-control"><%=data.customer_id%></label>
+                                    </div>
+                                </div> -->
+                                <div class="form-group row ">
+                                    <label class="control-label col-md-3 col-sm-3 ">วัตถุประสงค์</label>
+                                    <div class="col-md-3 col-sm-3 ">
+                                        <div class="form-control" style="vertical-align: text-top;height:150px;">
+                                            <%=data.text%>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row ">
+                                    <label class="control-label col-md-3 col-sm-3 ">จำนวนเงินลงทุน</label>
+                                    <div class="col-md-3 col-sm-3 ">
+                                        <label class="form-control"><%=data.target%></label>
+                                    </div>
+                                </div>
+                                <div class="form-group row ">
+                                    <label class="control-label col-md-3 col-sm-3 ">วันที่เข้าพบ</label>
+                                    <div class="col-md-3 col-sm-3 ">
+                                        <label class="form-control"><%=data.target_time%> : <%=data.target_time2%></label>
+                                    </div>
+                                </div>
+                                <div class="form-group row ">
+                                    <label class="control-label col-md-3 col-sm-3 ">ผู้อนุมัติ</label>
+                                    <div class="col-md-3 col-sm-3 ">
+                                        <label class="form-control"><%=data.approver%></label>
+                                    </div>
+                                </div>
+                                <br/>
+                                <hr/>
+                                <div class="form-group row ">
+                                    <form data-parsley-validate class="form-horizontal form-label-left" method="POST" action="../approved">
+                                        <input type="hidden" name="job_id" value="<%= data.job_id %>" />
+                                        <input type="hidden" name="approval_id" value="<%= data.approval_id %>" />
+                                        <button type="<%=button1.type%>" name="submit" value="<%=data.status%>" class="btn btn-round <%= button1.style %>" <%- button1.enable %>><%=button1.caption %></button>
+                                    </form>
+                                    <form data-parsley-validate class="form-horizontal form-label-left" method="POST" action="../rejected">
+                                        <input type="hidden" name="job_id" value="<%= data.job_id %>" />
+                                        <input type="hidden" name="approval_id" value="<%= data.approval_id %>" />
+                                        <button type="<%=button2.type%>" name="submit2" value="<%=button2.status%>" class="btn btn-round <%= button2.style %>" <%= button2.enable %>><%=button2.caption %></button>
+                                    </form>
+                                </div>
+                                <hr/>
+                                <!-- <div class="form-group row ">
+                                    <button type="button" class="btn btn-round btn-info">Closed Window</button>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </body>
+</html>

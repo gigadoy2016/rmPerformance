@@ -1,0 +1,310 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script> -->
+        <script src="../../js/lib/xlsx.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/iconv-js@0.3.5/index.min.js"></script>
+        <style>
+            table{
+                border-collapse: collapse;
+                width: 100%;             
+            };
+            th,td{
+                text-align: left;
+                padding: 8px;
+                background-color: aliceblue;
+            }
+            th{text-align: left;}
+            /*tr:nth-child(even) {background-color: #f2f2f2;}*/
+        </style>
+
+        <script>
+            const IP = '';
+            const BANK = {
+                'SCB': '014',
+                'KBANK': '004',
+                'BBL': '002',
+                'BAY': '025',
+                'KKP': '069',
+                'KK': '069',
+                'TTB': '011',
+                'KTB': '006'
+            };
+
+            function upload() {
+                var files = document.getElementById('file_upload').files;
+                if(files.length==0){
+                    alert("Please choose any file...");
+                    return;
+                }
+                var filename = files[0].name;
+                var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+                if (extension == '.XLS' || extension == '.XLSX') {
+                    //Here calling another method to read excel file into json
+                    excelFileToJSON(files[0]);
+                }else{
+                    alert("Please select a valid excel file.");
+                }
+            }
+            //Method to read excel file and convert it into JSON 
+            async function excelFileToJSON(file){
+                console.log("-------------------JSON-------------------------------");
+                try {
+                    var reader = new FileReader();
+                    reader.readAsBinaryString(file);
+                    reader.onload =async function(e) {
+                        let data = e.target.result;
+                        let workbook = XLSX.read(data, {type : 'binary'});
+                        let result = {};
+                        let firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        var JSON =await XLSX.utils.sheet_to_json(worksheet, {raw: true });
+                        // console.log(JSON);
+                        typeGroup(JSON);
+                    }
+                }catch(e){
+                    console.error(e);
+                }                
+            }
+            function typeGroup(jsonData){
+                console.log(jsonData);
+                jsonData.sort((a, b) => {
+                    // เปรียบเทียบ AMC code ของแต่ละรายการและเรียงลำดับตามลำดับตัวอักษร
+                    if (a['AMC Code'] < b['AMC Code']) return -1;
+                    if (a['AMC Code'] > b['AMC Code']) return 1;
+                    return 0;
+                });
+                const groupData = {};
+                jsonData.forEach(item => {
+                    const transactionType = item['Transaction Type'];
+                    if (!groupData[transactionType]) {
+                        groupData[transactionType] = [];
+                    }
+                    groupData[transactionType].push({
+                        "AMC_Code": item["AMC Code"],
+                        "TransactionType":item["Transaction Type"],
+                        "UnitholderID": item["Unitholder ID"],
+                        "AccountID": item["Account ID"],
+                        "CustomerName": item["Customer Name"],
+                        "FundCode": item["Fund Code"],
+                        "ConfirmedAmount": item["Confirmed Amount"],
+                        "Payment": item["Payment Type"],
+                        "Bank": item["Bank/Issued By"],
+                        "BankAccount": item["Bank Account/Credit No./Point Code"],
+                    });
+                });
+
+                
+                const transRED = amcGroup(groupData.RED);
+                // const transSWI = amcGroup(groupData.SWI);
+
+                console.log(transRED);
+                // console.log(transSWI);
+                genCode(transRED,'RED');
+                // genCode(transSWI,'SWI');
+            }
+
+            function amcGroup(jsonData){
+                if(jsonData.length ==0){
+                    return 0;
+                }
+                const groupData = {};
+                jsonData.forEach(item => {
+                    const amcCode = item['AMC_Code'];
+                    if (!groupData[amcCode]) {
+                        groupData[amcCode] = [];
+                    }
+                    groupData[amcCode].push(item);
+                });
+                return groupData;
+            }
+
+            function genCode(jsonData,typeID){
+                let element = document.getElementById(typeID);
+
+                for (const groupName in jsonData) {
+                    const groupData = jsonData[groupName];
+                    const table = document.createElement('table');
+                    const headerRow = table.insertRow();
+                    const ATS_SA = [];
+                    const COL_SA = [];
+                    // เพิ่มหัวคอลัมน์
+                    for (const key in groupData[0]) {
+                        const headerCell = document.createElement('th');
+                        headerCell.textContent = key;
+                        headerRow.appendChild(headerCell);
+                    }
+                    // เพิ่มแถวข้อมูล
+                    let sum =0;
+                    groupData.forEach(item => {
+                        const row = table.insertRow();
+                        for (const key in item) {
+                            const cell = row.insertCell();
+
+                            if(key=='ConfirmedAmount'){
+                                let amount = convertCurrency(item[key]);
+                                cell.textContent = amount;
+                            }else{
+                                cell.textContent = item[key];
+                            }
+                            
+                            if(item[key] === 'ATS_SA'){
+                                ATS_SA.push(item);
+                            }else if(item[key] === 'COL_SA'){
+                                COL_SA.push(item);
+                                row.style.color = 'red';
+                            }
+                        }
+                        sum += item['ConfirmedAmount'];
+                    });
+                    const rowSum = table.insertRow();
+                    rowSum.insertCell();
+                    rowSum.insertCell();
+                    rowSum.insertCell();
+                    rowSum.insertCell();
+                    rowSum.insertCell();
+                    rowSum.insertCell();
+                    const cellSum = rowSum.insertCell();
+                    cellSum.textContent = convertCurrency(sum);
+                    cellSum.style.fontWeight  = "bold";
+                    
+                    if(ATS_SA.length > 0){
+                        const cellButtonATS = rowSum.insertCell();
+                        const btnATS = document.createElement('button');
+                        btnATS.innerHTML= 'ATS_SA';
+                        btnATS.addEventListener('click', () => {
+                            exportTxt(ATS_SA,groupName,'ATS_SA');
+                        });
+                        cellButtonATS.appendChild(btnATS);
+                    }
+
+                    if(COL_SA.length>0){
+                        const cellButtonCOL = rowSum.insertCell();
+                        const btnCOL = document.createElement('button');
+                        btnCOL.innerHTML = 'COL_SA';
+                        btnCOL.addEventListener('click', () => {
+                            exportTxt(COL_SA,groupName,'COL_SA');
+                        });
+                        cellButtonCOL.appendChild(btnCOL);
+                    }
+                    
+
+                    // เพิ่มชื่อกลุ่มเป็นหัวของตาราง
+                    const groupHeader = document.createElement('h2');
+                    groupHeader.textContent = groupName;
+
+
+                    element.appendChild(groupHeader);
+                    // เพิ่มตารางลงในเอกสาร
+                    element.appendChild(table);
+                }
+            }
+
+            function exportTxt( jsonData,amcName,type ) {
+                const url = "."+IP+"/kkp";
+                
+                let txtData ='';
+                if(type === 'ATS_SA'){
+                    txtData = convert2kkp(jsonData);
+                }else if(type === 'COL_SA'){
+                    txtData = kkp2kkp(jsonData);
+                }
+                // // ส่งให้ server สร้าง file txt ที่เป็น type ANSI
+                try{
+                    const formData = new FormData();
+                    const fileName = amcName+'_'+type+convertDate()+'.txt';
+                    
+                    
+                    fetch(url,{
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body:JSON.stringify({ text: txtData,fileName: fileName})
+                    }).then(response =>response.blob())
+                    .then( blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileName; // ชื่อไฟล์ที่จะให้ดาวน์โหลด
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);} )
+                        .catch(error => console.error(error));
+                }catch(e){
+                    alert(e);
+                }
+            }
+
+            function convertDate(){
+                const times = new Date();
+                const year = times.getFullYear().toString().slice(-2);
+                const month = String("0" + (times.getMonth()+1)).slice(-2);
+                const date = String("0" + times.getDate()).slice(-2);
+
+                const time = date+month+year;
+                return time;
+            }
+
+            
+
+            function convert2kkp(JSON){
+                const txtDate = convertDate();
+                const transactionCount = JSON.length;
+                const transactionNumber = transactionCount.toString().padStart(5, '0');
+                let txtBody = ``;
+                let sumAmount =0;
+
+                for(let i=0;i < JSON.length;i++ ){
+                    let data = JSON[i];
+
+                    txtBody += `D|${data.BankAccount}|${txtDate}|0|${data.ConfirmedAmount.toFixed(2)}|||||||${data.CustomerName}|${BANK[data.Bank]}||||||||\r\n`
+                    sumAmount += data.ConfirmedAmount;
+                }
+
+                let txtHead = `H|WCC837|WEALTHCONCEPT|${txtDate}|${transactionNumber}|${sumAmount.toFixed(2)}|N|||||||||||\r\n`
+                return txtHead + txtBody;
+            }
+
+            function kkp2kkp(JSON){
+                const txtDate = convertDate();
+                const transactionCount = 1;
+                const transactionNumber = transactionCount.toString().padStart(5, '0');
+                const bankAccount = '1000047471';
+                const wcc = 'บริษัทหลักทรัพย์นายหน้าซื้อขายหน่วยลงทุน เวลธ์ คอนเซปท์ จำกัด';
+                let txtBody = ``;
+                let sumAmount =0;
+
+                for(let i=0;i < JSON.length;i++ ){
+                    let data = JSON[i];
+                    // txtBody += `D|${bankAccount}|${txtDate}|0|${data.ConfirmedAmount}|||||||${wcc}|069||||||||\r\n`
+                    sumAmount += data.ConfirmedAmount;
+                }
+
+                let txtHead = `H|WCC837|WEALTHCONCEPT|${txtDate}|${transactionNumber}|${sumAmount.toFixed(2)}|N|||||||||||\r\n`
+                txtBody += `D|${bankAccount}|${txtDate}|0|${sumAmount.toFixed(2)}|||||||${wcc}|069||||||||\r\n`
+                return txtHead + txtBody;
+            }
+
+            function convertCurrency(input){
+                const type= typeof input;
+                if(type ==='string'){
+                    return input;
+                }else if(type === 'number'){                    
+                    return parseFloat(input).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+            }
+
+        </script>
+    </head>
+    <body>
+        <h1>Excel FCC Export to KKP</h1>
+        <p>
+            <input type="file" name="file" id="file_upload" onchange="upload();"/>
+            <br><br>
+            <div id="RED" style="background-color: rgb(229, 232, 213); padding: 1em;"></div>
+            <div id="SWI" style="background-color: rgb(186, 178, 255); padding: 1em;"></div>
+          </p>
+          
+    </body>
+</html>

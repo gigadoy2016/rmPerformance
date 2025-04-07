@@ -1,0 +1,85 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script>
+        <style>
+            
+        </style>
+
+        <script>
+            function upload() {
+                var files = document.getElementById('file_upload').files;
+                if(files.length==0){
+                    alert("Please choose any file...");
+                    return;
+                }
+                var filename = files[0].name;
+                var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+                if (extension == '.XLS' || extension == '.XLSX') {
+                    //Here calling another method to read excel file into json
+                    excelFileToJSON(files[0]);
+                }else{
+                    alert("Please select a valid excel file.");
+                }
+            }
+            //Method to read excel file and convert it into JSON 
+            function excelFileToJSON(file){
+                console.log("-------------------JSON-------------------------------");
+                try {
+                    var reader = new FileReader();
+                    reader.readAsBinaryString(file);
+                    reader.onload = function(e) {
+                        var data = e.target.result;
+                        var workbook = XLSX.read(data, {type : 'binary'});
+                        var result = {};
+                        var firstSheetName = workbook.SheetNames[0];
+                        // console.log(workbook.SheetNames.length);
+                        totalFee(workbook);
+                    }
+                }catch(e){
+                    console.error(e);
+                }
+            }
+            function totalFee(workbook){
+                let sheet_name_list = workbook.SheetNames;
+                let sumTotalFee = 0;
+                let sumVAT = 0;
+                let sumFEE = 0;
+                let table = "<tr><th>บลจ</th><th>Total Fee</th><th>VAT</th><th>FEE</th>";
+                // console.log(sheet_name_list);
+                for(let i=0; i < sheet_name_list.length ;i++){
+                    let sheetName = sheet_name_list[i];
+                    let xlData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                    let sheet = workbook.Sheets[sheetName];
+                    let totalFee = sheet['I25'].v;
+                    let vat = sheet['I26'].v;
+                    let fee = sheet['I27'].v;
+                    // console.log(totalFee.v);
+                    console.log(sheetName +" :TotalFee="+totalFee+ "  VAT="+vat+"  FEE="+fee);
+                    table += "<tr><td>"+sheetName+"</td><td>"+totalFee+"</td><td>"+vat+"</td><td>"+fee+"</td>";
+                    sumTotalFee  += totalFee;
+                    sumVAT +=vat;
+                    sumFEE += fee;
+                }
+                console.log("Sum total:"+sumTotalFee);
+                console.log("Sum VAT:"+sumVAT);
+                console.log("Sum FEE:"+sumFEE);
+                let tableObj = document.getElementById('display_excel_data');
+                tableObj.innerHTML = table;
+            }
+        </script>
+    </head>
+    <body>
+        <h1>เอ๋ รีพอร์ต</h1>
+        <p>
+            <input type="file" name="file" id="file_upload" onchange="upload();"/>
+            <br><br>
+            <table id="display_excel_data">
+
+            </table>
+            <br><br>
+          </p>
+    </body>
+</html>

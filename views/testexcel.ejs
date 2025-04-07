@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= name %></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+    <link rel='stylesheet' href='../../css/mycss.css' />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel='stylesheet' href='../../css/ion.rangeSlider.min.css' />
+    <script src="https://unpkg.com/exceljs/dist/exceljs.min.js"></script>
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/jquery-ui/jquery-ui.js"></script>
+    <script src="../../js/emp.js"></script>
+    <script src="../../js/PivotTable.js"></script>
+    <script src="../../js/dataTables.js"></script>
+    <script src="../../js/waitingTable.js"></script>
+    <script src="../../js/ion.rangeSlider.min.js"></script>
+    <link rel="stylesheet" href="../../js/jquery-ui/jquery-ui.css">
+    <link rel="stylesheet" href="../../css/dataTables.css">
+    <style>
+      .tb { 
+        border-collapse: collapse; 
+      }
+      .tb th, .tb td { padding: 5px; border: solid 1px #777; text-align: center;}
+      .tb th { background-color: lightblue; }
+    </style>
+    <script>
+        var offsetFee = 10; // ค่าชดเชย 10บาท
+
+        var DATAS = [];
+        var amcSharing;
+        var targetData =[];
+        var pivotTable;
+        var firstDay
+        var lastDay
+        var year = 2023;
+        
+        var HOME_URL = "http://<%= ipAPI %>";
+        var URL = HOME_URL+"/transactions/select/";
+        
+        var frontEndFee = 0;
+        var trailing_fee = 0;
+        var user = {
+          'name':'<%= data.name_eng %>'
+          ,'lastname':'<%= data.lastname_eng %>'
+          ,'target':'<%= data.target %>'
+          ,'ic_code':'<%= data.ic_code %>'
+          <% if (permission >= 2) { %>
+            ,'permission':<%= permission %>
+          <% } %>
+        };
+        // console.log(user);
+        const currentDate = new Date();
+        const pastDate = new Date(currentDate.setDate(currentDate.getDate() - 2));
+        const pastDateS = pastDate.getDate()+ '/' + (pastDate.getMonth() + 1) +'/'+ pastDate.getFullYear();
+        
+        $(document).ready(function() {
+          $( "#tabs" ).tabs();
+          $('#tableTransaction').DataTable();
+          $("#startDate").datepicker({dateFormat: "dd/mm/yy"});
+          $("#endDate").datepicker({dateFormat: "dd/mm/yy"});
+          const today = new Date();
+          $('#txt-year').val(today.getFullYear());
+
+          // สร้างฟังก์ชัน autocompleted สำหรับ TextBox
+          $( "#employee_id" ).autocomplete({
+              source: function(request, response) {
+                  const input = request.term.toLowerCase(); // รับค่าจาก TextBox และแปลงเป็นตัวพิมพ์เล็ก
+                  let URL = HOME_URL+"/employees/search/";
+                  if (user.permission ==3){
+                    URL = HOME_URL+"/employees/search/";
+                  }else if (user.permission == 2){
+                    URL = HOME_URL+"/employees/find/";
+                  }
+
+                  $.ajax({
+                      url: URL,           // ระบุ URL ของไฟล์ที่จะรับค่าข้อมูลจากฐานข้อมูล
+                      type: "POST",       // ระบุเป็น Method POST
+                      dataType: "json",   // ระบุรูปแบบข้อมูลที่จะรับกลับมาเป็น JSON
+                      data: {
+                          word: input,
+                          name: user.name,
+                          lastname: user.lastname,
+                          ic: user.ic_code,
+                          permission: user.permission 
+                      },
+                      success: function(data) {
+                        let output = data.map(item=>{
+                          let value = `${item.ic_code} ${item.name_eng} ${item.lastname_eng}`;
+                          return value;
+                        });
+                        response(output);
+                      }
+                  });
+              },minLength: 1,
+              select: function(event, ui) {
+                // เมื่อเลือกรายการ จะแสดงข้อความที่เลือกใน console
+                // console.log(ui.item.value);
+                // console.log(data);
+              }
+          });
+          init();
+        });
+
+        async function init(){
+          let waiting = document.getElementById("waiting-seaction").style.display = "none";
+          $("#ic_code").html(user.ic_code);
+          $("#target").html(user.target);
+          // $("#past2date").html(pastDateS);
+
+          await submit1();
+          // await tab1Click();
+        }
+
+        function loadUser(user){
+          console.log("-------- load data");
+          // console.log(user);
+          
+          $("#ic_code").html(user.ic_code);
+
+          if(targetData.target > 0){
+            $("#target").html(targetData.target.toLocaleString('en-US'));
+            user.target = targetData.target;
+          }else{
+            $("#target").html(user.target.toLocaleString('en-US'));
+          }
+
+          $("#fontEndFee").html(frontEndFee.toLocaleString('en-US'));
+          if(user.trailing_fee == null){
+            $("#trailing").html("N/A");
+            $("#trailing-date").html( "");
+            $("#total_fee").html( "N/A");
+          }else{
+            let txt ="<label>"+Math.floor(user.trailing_fee).toLocaleString('en-US')+"</label>";
+            // console.log(user);
+            
+            if(user.trailing !== undefined ){
+              date = new Date(user.trailing.date);
+              op = { day: 'numeric', month: 'short' };
+              formattedDate = date.toLocaleDateString('en-GB', op);
+              txtDate = "<label style='color:gray'> ("+formattedDate+")</label>";
+            }else{
+              txtDate = "";
+            }
+            
+            total = user.trailing_fee + frontEndFee;
+            total = Math.floor(total).toLocaleString('en-US');
+            $("#trailing").html( txt);
+            $("#trailing-date").html( txtDate);
+            $("#total_fee").html( total);
+          }
+          
+          user.performance =  Math.floor(frontEndFee+ user.trailing_fee - user.target);
+          let className = 'per-red';
+          if(user.performance > 0){
+            className = 'per-green';
+          }
+
+          let pf ='<label class="'+className+'">'+ user.performance.toLocaleString('en-US')+'</label>';
+          $("#performance").html(pf);
+
+          $("#nameRM").html(user.name_eng+" "+user.lastname_eng+" (ic:"+user.ic_code+")");
+          // console.log("++++++++++++++++++++++++++++++++++++++++++++++++++");
+          // console.log(DATAS.trans);
+          // let transaction = DATAS.trans;
+          // $("#lastTransactionDate").html(getTransactionDate(transaction));
+          $("#lastTransactionDate").html(getYesterday());
+          // console.log("++++++++++++++++++++++++++++++++++++++++++++++++++");
+        }
+
+        function getTransactionDate(transaction){
+          // console.log("====get date ============ ");
+          if(transaction.length>0){
+            const transactionDateArr = transaction.map(item => {
+              // if(item.allotment_date != null){
+              if(item.transaction_date != null){
+                const [date, time] = item.transaction_date.split(' ');
+                const [dd, mm, yyyy] = date.split('/');
+                // const [hh, min] = time.split(':');
+                return new Date(yyyy, mm-1, dd);
+              }else{
+                return "N/A";
+              }
+            });
+
+          // หา transaction_date ล่าสุด
+            const latestTransactionDate = new Date(Math.max.apply(null, transactionDateArr));
+            const dateObj = new Date(latestTransactionDate);
+            const formattedDate = dateObj.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return formattedDate;
+          }else{
+            return "N/A";
+          }
+        }
+        function getYesterday(){
+          const today = new Date();
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+
+          const day = yesterday.getDate();
+          const month = yesterday.getMonth() + 1; // เดือนนับจาก 0 ถึง 11, ต้องบวก 1 เพื่อให้ตรงกับรูปแบบที่ต้องการ
+          const year = yesterday.getFullYear();
+          const formattedDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+
+          return formattedDate;
+        }
+
+        async function getSharingPromotion(month,year){
+          const url = HOME_URL +"/amc/sharing/month/"+month+"/"+year;
+          let sharingData =[];
+          await $.get(url,function(){
+            // console.log(">> request Sharing");
+          }).done(function(data){
+            // console.log(">> request Sharing Done");
+            amcSharing = sharingData = data;
+          });
+        }
+
+        function getTargetMonth(month,ic_code){
+          const url = HOME_URL +"/amc/target/month/"+month+"/"+ic_code;
+          $.get(url,function(){
+            // console.log(">> request Target");
+          }).done(function(data){
+            if(data.length > 0){
+              targetData = data[0];
+              // console.log(data[0].target);
+              // $('#target').html(data[0].target);
+              // loadUser(user);
+              if(data[0].target > 0){
+                $("#target").html(data[0].target.toLocaleString('en-US'));
+                user.target = data[0].target;
+              }
+            }else{
+              targetData = [];
+            }
+          });
+        }
+
+        async function submit1() {
+          const url = URL;
+
+          getDate();
+          let selectedMonth = document.getElementById('month-select').value;
+          await getSharingPromotion(selectedMonth,year);
+          
+
+          console.log("======= submit1 ");
+          console.log(user);
+          const startDate =firstDay;
+          const endDate = lastDay;
+          
+          let employeeId = $("#employee_id").val();
+
+          if(employeeId ==""){
+            employeeId = user.ic_code;
+          }else if(user.permission ==2 && employeeId ==""){
+            employeeId = user.ic_code;
+          }
+          const ic= employeeId.match(/\d+/)[0];
+          await getTargetMonth(selectedMonth, ic);
+          
+          $.post(url, { startDate: startDate, endDate: endDate, employee: employeeId })
+            .done(function(data) {
+              // console.log("==========Query Transactions=========================");
+              // console.log(data.trans);
+              DATAs = new Array();
+              DATAS = data;
+              $('#tableTransaction').DataTable({
+                "data": data.trans,
+                "columns":[
+                  {"data":"account_id"},
+                  // {"data":"customer_name"},
+                  {"data":"fund_code"},
+                  {"data":"amount" ,className: "text-right"},
+                  {"data":"status"},
+                  {"data":"transaction_type"},
+                  {"data":"confirmed_amount" ,className: "text-right"},
+                  {"data":"confirmed_units" ,className: "text-right"},
+                  {"data":"effective_date"},
+                  {"data":"settlement_date"},
+                  {"data":"amc_code"},
+                  {"data":"settlement_bank"},
+                  {"data":"allotment_date"},
+                  {"data":"nav_date"},
+                  {"data":"allotted_nav" ,className: "text-right"},
+                  {"data":"fee" ,className: "text-right"},
+                  {"data":"withholding_tax" ,className: "text-right"},
+                  {"data":"vat" ,className: "text-right"}
+                ],
+                "bDestroy": true
+              });
+              tab3Click();
+              // จัดการข้อมูลที่ได้รับกลับจาก server ตามต้องการ
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+              console.log("Error:", textStatus, errorThrown);
+            });
+        }
+
+        function groupBy(array, key){
+          return array.reduce((result, item) => {
+            (result[item[key]] = result[item[key]] || []).push(item);
+            return result;
+          }, {});
+        };
+
+        function tab1Click(){
+          let trans = DATAS.trans;
+          let json = trans.filter((item) => item.amount !== 0 && item.amount !== null);
+          let transactionTypes = transactionType();
+          json = json.filter((item) => transactionTypes.includes(item.transaction_type));
+          // console.log(json);
+
+          pivotTable = new PivotTable("pivotTable");
+          pivotTable.removeRows();
+          console.log("==Tab2 Click==");
+          //==== Gentable====
+          pivotTable.genFundTable(json);
+          frontEndFee = pivotTable.getFrontEndFee();
+          $("#fontEndFee").html(pivotTable.getCurrency(frontEndFee));
+
+          loadUser(DATAS.user);
+        }
+
+        function tab3Click(){
+          console.log("++++++++++++++++++++++++++ trans 2+++++++++++++++++++++++++");
+          let trans = DATAS.trans;
+          const allottedTrans = trans.filter((trans) => trans.status === 'ALLOTTED');
+          const waitingTrans = trans.filter((trans) => trans.status === 'WAITING');
+          
+          // console.log(allottedTrans);
+          // console.log(waitingTrans);
+
+          let json = allottedTrans.filter((item) => item.amount !== 0 && item.amount !== null);
+          let transactionTypes = transactionType();
+          json = json.filter((item) => transactionTypes.includes(item.transaction_type));
+          // console.log(json);
+
+          pivotTable = new PivotTable("pivotTable2");
+          pivotTable.setAMCSharing(amcSharing);
+          pivotTable.removeRows();
+          // console.log("==Tab3 Click==");
+          //==== Gentable====
+          if(json.length>0){
+            pivotTable.genFundTableVer2(json);
+          }
+          frontEndFee = pivotTable.getFrontEndFee();
+          $("#fontEndFee").html(pivotTable.getCurrency(frontEndFee));
+          // console.log(pivotTable.getgrandTotalSumFrontEndFee());
+          DATAS.user.performance = pivotTable.getgrandTotalSumFrontEndFee();
+          loadUser(DATAS.user);
+
+          // ++++++++++++++ Waiting Saction +++++++++++++++++
+          let wTable = new waitingTable("waiting-table",waitingTrans);
+          if(waitingTrans.length>0){
+            document.getElementById("waiting-seaction").style.display = "block";
+            wTable.showTable();
+          }else{
+            document.getElementById("waiting-seaction").style.display = "none";
+          }
+          
+        }
+
+        function transactionType(){
+          let checkbox0 = document.getElementById("tranType0");
+          let checkbox1 = document.getElementById("tranType1");
+          let type = [];
+          if(checkbox0.checked){
+            type.push('SUB');
+          }
+
+          if(checkbox1.checked){
+            type.push('SWI');
+          }
+
+          return type;
+        }
+        function SUBClick(){
+          // console.log(pivotTable.filterData(DATAS, "transaction_type", transactionType()));
+          tab1Click();
+        }
+        function SWIClick(){
+          // console.log(pivotTable.filterData(DATAS, "transaction_type", transactionType()));
+          tab1Click();
+        }
+
+        function getDate(){
+          let selectedMonth = document.getElementById('month-select').value;
+          const date = new Date(Date.now());
+          const m = selectedMonth - 1;
+          date.setDate(1);  
+          date.setMonth(m);
+            
+            firstDay = date.toISOString().slice(0, 10);
+            date.setMonth(date.getMonth() + 1, 0);
+            lastDay = date.toISOString().slice(0, 10);
+        }
+
+        const url = "../../js/emp.js";
+        const request = new XMLHttpRequest();
+        request.open("GET", url);
+        request.responseType = "json";
+        request.send();
+
+        //============ Function Debug ==============================//
+        function test(){
+          console.log("test");
+          console.log(user);
+        }
+
+
+    </script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  </head>
+  <body>
+    <% if (permission == 3) { %>
+    <%- include('./navigator') %>
+    <% }else { %>
+    <%- include('./nav_lv1') %>
+    <% }; %>
+    <h1 id="nameRM"><%= name %></h1>
+    <div id="app" class="user-container">
+      <label style="padding-left: 1em;margin: 0.5em;" class="box2">
+        <h2>Performance report as of :<label id="lastTransactionDate">N/A</label></h2>
+
+        <label for="startDate"> Start Date:</label>
+        <select id="month-select">
+          <option value="1">มกราคม</option>
+          <option value="2">กุมภาพันธ์</option>
+          <option value="3">มีนาคม</option>
+          <option value="4">เมษายน</option>
+          <option value="5">พฤษภาคม</option>
+          <option value="6">มิถุนายน</option>
+          <option value="7">กรกฎาคม</option>
+          <option value="8">สิงหาคม</option>
+          <option value="9">กันยายน</option>
+          <option value="10">ตุลาคม</option>
+          <option value="11">พฤศจิกายน</option>
+          <option value="12">ธันวาคม</option>
+        </select>
+        <input type="number" id="txt-year" name="year" value="" size="4" style="width: 4em;"/>
+        <script>
+          const now = new Date();
+          const currentMonth = now.getMonth() + 1; // เดือนปัจจุบันจะเริ่มที่ 0 (มกราคม) จึงต้องบวก 1 เพื่อให้เป็นเดือนจริง
+          const monthSelect = document.getElementById('month-select');
+          const options = monthSelect.options;
+        
+          for (let i = 0; i < options.length; i++) {
+            if (options[i].value == currentMonth) {
+              options[i].selected = true;
+              break;
+            }
+          }
+          let selectedMonth = options[monthSelect.selectedIndex].value;
+
+          monthSelect.addEventListener('change', (event) => {
+            selectedMonth = event.target.value;
+          });
+        </script>
+        <!-- <input id="startDate" name="startDate" size="13" value="01/02/2023"> -->
+  
+        <!-- <label for="endDate"> End Date:</label>
+        <input  id="endDate" name="endDate" size="13" value="28/02/2023"> -->
+  
+        <% if (permission >= 2) { %>
+          <label for="employee_id"> Employee:</label>
+          <input id="employee_id" name="employee" size="20" placeholder="insert...name or name" 
+          onclick="this.select();" onchange="test();">
+        <% }else { %>
+          <input type="hidden" name="employee" id="employee_id" value="">
+        <% }; %>
+        <!-- <input type="text" name="hidden" id="hidden" value=""> -->
+  
+        <!-- <input id="clear" name="clear" type="reset" value="Clear"> -->
+        <button type="submit" onclick="submit1();">Search</button>
+        <!-- <button onclick="test();">TEST</button> -->
+        <div>
+          <label style="font-style: italic;color: gray;">*Allotted date</label>
+          <span id="past2date" style="border: 0px solid gray;width: 100em;height:auto;color:red">T-2 </span>
+        </div>
+      </label>
+      <label style="width: 20%;">
+        <table class="box1" style="margin: 0.5em;">
+          <tr><td class="co">IC: </td><td id="ic_code" class="userPerfoemance">11</td><td></td></tr>
+          <tr><td class="co">Target: </td><td id="target" class="userPerfoemance"></td><td></td></tr>
+          <tr><td style="text-align: center;background-color: #37bc9b;" colspan="3">KPI</td></tr>
+          <tr><td class="co">Front end fee: </td><td id="fontEndFee" class="userPerfoemance"></td><td></td></tr>
+          <tr><td class="co">Trailing fee: </td><td id="trailing" class="userPerfoemance"></td><td id="trailing-date"></td></tr>
+          <tr><td class="co">Total fee: </td><td id="total_fee" class="userPerfoemance"></td><td></td></tr>
+          <tr><td class="co">Performance: </td><td id="performance" class="userPerfoemance"></td><td></td></tr>
+        </table>
+      </label>
+    </div>
+    
+    <div id="tabs">
+      <ul>
+        <li><a href="#tabs-3" onclick="tab3Click();">Result</a></li>
+        <li><a href="#tabs-1" onclick="tab1Click();" <% if (permission < 4) { %> style="display: none;"<% } %>  >Result 2</a></li>
+        <li><a href="#tabs-2" <% if (permission < 3) { %> style="display: none;" <% } %> >Transactions</a></li>
+      </ul>
+      <div id="tabs-3">
+        <hr>
+        <div><h4>Allottment Transactions.</h4></div>
+        <table id="pivotTable2" style="width: 100%;" class="pivotTable">
+          <tr>
+            <th class="f-code" rowspan="2">Fund Code</th>
+            <th colspan="2">SUB</th>
+            <th colspan="2" class="orange">SWI</th>
+            <th rowspan="2" class="blue">Total Amount</th>
+            <th rowspan="2" class="blue">Total Font End Fee</th>
+          </tr>
+          <tr>
+            <th>Amount</th>
+            <!-- <th>Sum of Fee</th>
+            <th>WH</th>
+            <th>Net</th>
+            <th>SellingFee</th> -->
+            <th>Front End Fee</th>
+            <th class="orange">Amount</th>
+            <!-- <th class="orange">Sum of Fee</th>
+            <th class="orange">WH</th>
+            <th class="orange">Net</th>
+            <th class="orange">SellingFee</th> -->
+            <th class="orange">Front End Fee</th>
+            <!-- <th></th><th></th> -->
+          </tr>
+        </table>
+        <div style="margin-top:1em" id="waiting-seaction" class="tb row">
+          <h4>Waiting Transactions.</h4>
+          <table class="col-6" id="waiting-table">
+            <tr>
+              <th>no.</th>
+              <th>fund code</th>
+              <th>amount</th>
+              <th>transaction type</th>
+              <th>status</th>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div id="tabs-1">
+        <div>
+          <span onclick="SUBClick()">
+            <input type="checkbox" id="tranType0" name="tranType" value="SUB" checked>
+            <label for="tranType">SUB</label>
+          </span>
+          <span style="margin-left: 2em;" onclick="SWIClick()">
+            <input type="checkbox" id="tranType1" name="tranType" value="SWI" checked>
+            <label for="tranType">SWI</label>
+          </span>
+        </div>
+        <hr>
+        <table id="pivotTable" style="width: 100%;">
+          <tr>
+            <th class="f-code" rowspan="2">Row Labels</th>
+            <th colspan="6">SUB</th>
+            <th colspan="6" class="orange">SWI</th>
+            <th rowspan="2">Total Amount</th><th rowspan="2">Total Font End Fee</th>
+          </tr>
+          <tr>
+            <th>Sum of Amount</th><th>Sum of Fee</th><th>WH</th><th>Net</th><th>SellingFee</th><th>Front End Fee</th>
+            <th class="orange">Sum of Amount</th><th class="orange">Sum of Fee</th><th class="orange">WH</th><th class="orange">Net</th>
+            <th class="orange">SellingFee</th><th class="orange">Front End Fee</th>
+            <!-- <th></th><th></th> -->
+          </tr>
+        </table>
+      </div>
+      <div id="tabs-2">
+        <div class="container-fluid">
+          <h2 class="text-center my-3"></h2>
+          <hr>
+          <div class="table-responsive">
+            <table class="display" id="tableTransaction" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Account ID</th>
+                  <!-- <th>Customer Name</th> -->
+                  <th>Fund Code</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Type</th>
+                  <th>Confirmed Amount</th>
+                  <th>Confirmed Units</th>
+                  <th>Effective Date</th>
+                  <th>Settlement Date</th>
+                  <th>AMC Code</th>
+                  <th>Bank</th>
+                  <th>Allotment Date</th>
+                  <th>NAV Date</th>
+                  <th>Allotted NAV</th>
+                  <th>Fee</th>
+                  <th>Withholding Tax</th>
+                  <th>VAT</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding: 1em;" id="div-xls">
+      <form action="../xls/export" method="POST">
+        <input type="hidden" name="d" value="" id="user_data"/>
+        <button onclick="excel();">Export Excel.</button>
+      </form>      
+    </div>
+    <script>
+      function excel(){
+        console.log("Excel funtion");
+        let data  = {
+          "ic":4100,
+          "first_name":"Sutkanueng",
+          "last_name":"Honglada",
+          "reportAsOf":"12/06/2023",
+          "month":5,
+          "year":"2023",
+          "target":228500,
+          "FEFee":15562,
+          "TFee":5912,
+          "TFeeDate":"31 May",
+          "totalFee":21474,
+          "performance":-207026,
+          "data":{
+            "allottment":[
+              {
+                "fundcode":"ES-USTECH",
+                "SUB":{"amount":350000,"FEFee":2188},
+                "total_amount":350000,
+                "total_FEFee":2188
+              },{
+                "fundcode":"KFCASH-A",
+                "SWI":{"amount":350000,"FEFee":2188},
+                "total_amount":350000,
+                "total_FEFee":2188
+              }
+            ],
+            "waitting":[
+              { "fundcode":"PRINCIPAL GOPP-A", "amount":1904148, "tranType":"SWI", "status":"WAITING" },
+              { "fundcode":"PRINCIPAL GCLOUD-A", "amount":1679144, "tranType":"SWI", "status":"WAITING" },
+              { "fundcode":"PRINCIPAL GOPP-A", "amount":1628826, "tranType":"SWI", "status":"WAITING" }
+            ]
+          }
+        };
+        document.getElementById("user_data").value = JSON.stringify(data);
+      }
+    </script>
+  </body>
+</html>

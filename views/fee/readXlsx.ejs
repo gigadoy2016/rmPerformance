@@ -1,0 +1,169 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script> -->
+        <script src="../../js/lib/xlsx.min.js"></script>
+        <style>
+            table{
+                border-collapse: collapse;
+                width: 100%;             
+            };
+            th,td{
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {background-color: #f2f2f2;}
+        </style>
+
+        <script>
+            var jsonTrailing;
+            function upload() {
+                var files = document.getElementById('file_upload').files;
+                if(files.length==0){
+                    alert("Please choose any file...");
+                    return;
+                }
+                var filename = files[0].name;
+                var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+                if (extension == '.XLS' || extension == '.XLSX') {
+                    //Here calling another method to read excel file into json
+                    excelFileToJSON(files[0]);
+                }else{
+                    alert("Please select a valid excel file.");
+                }
+            }
+            //Method to read excel file and convert it into JSON 
+            function excelFileToJSON(file){
+                console.log("-------------------JSON-------------------------------");
+                try {
+                    var reader = new FileReader();
+                    reader.readAsBinaryString(file);
+                    reader.onload = function(e) {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, {type : 'binary'});
+
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        let jsonData = XLSX.utils.sheet_to_json(worksheet); // แปลงข้อมูลเป็น JSON
+
+                        // ลบ space ออกจาก key
+                        jsonData = jsonData.map(row => {
+                            const cleanedRow = {};
+                            Object.keys(row).forEach(key => {
+                                const cleanedKey = key.trim(); // ลบ space รอบ key
+                                cleanedRow[cleanedKey] = row[key];
+                            });
+                            return cleanedRow;
+                        });
+                        
+                        displaySheetExcel(jsonData);
+                        jsonTrailing = jsonData;
+                    }
+                }catch(e){
+                    console.error(e);
+                }
+            }
+            function formatNumber(value) {
+                // ตรวจสอบว่า value เป็นตัวเลขหรือไม่
+                if (!isNaN(value)) {
+                    return parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                return value;
+            }
+            function displaySheetExcel(json) {
+                const table = document.getElementById("display_excel_data");
+                table.innerHTML = ""; // ล้างข้อมูลตารางก่อนแสดงใหม่
+
+                if (json.length === 0) {
+                    table.innerHTML = "<tr><td>No data found</td></tr>";
+                    return;
+                }
+
+                // สร้างหัวตาราง
+                const headerRow = document.createElement("tr");
+                Object.keys(json[0]).forEach(header => {
+                    const th = document.createElement("th");
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+
+                // เพิ่มข้อมูลแต่ละแถว
+                json.forEach(row => {
+                    const tr = document.createElement("tr");
+                    Object.values(row).forEach(cellValue => {
+                        const td = document.createElement("td");
+                        td.textContent = formatNumber(cellValue); // ฟอร์แมตตัวเลข
+                        tr.appendChild(td);
+                    });
+                    table.appendChild(tr);
+                });
+            }
+            // กำหนดค่าเริ่มต้นสำหรับวันที่ T-1
+            function setDefaultDate() {
+                const inputDate = document.getElementById("active-date");
+                const today = new Date(); // กำหนดวันที่ T
+                const tMinusOne = new Date(today);
+                tMinusOne.setDate(today.getDate() - 1); // ลบ 1 วัน
+
+                // แปลงวันที่ให้อยู่ในรูปแบบ YYYY-MM-DD
+                const formattedDate = tMinusOne.toISOString().split('T')[0];
+                inputDate.value = formattedDate; // ตั้งค่าใน input
+            }
+
+            function sendData(){
+                excelData = jsonTrailing;
+                console.log(jsonTrailing);
+                const activeDate = document.getElementById("active-date").value;
+                const data2Send = {
+                    "trailing":excelData,
+                    "date":activeDate,
+                }
+
+                if (excelData.length === 0) {
+                    alert("No data to send!");
+                    return;
+                }
+
+                console.log(data2Send);
+                // ส่งข้อมูลไปยัง /aum/uploadAUM
+                fetch('/trailingFee/uploadTrailing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data2Send)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Data successfully uploaded!");
+                        document.getElementById('send_button').style.display = 'none';
+                    } else {
+                        alert("Failed to upload data.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while sending data.");
+                });
+            }
+            window.onload = setDefaultDate;
+        </script>
+    </head>
+    <body>
+        <h1>Update Trailing Fee</h1>
+        <p>
+            <label for="input_date">T-1 Date:</label>
+            <input type="text" name="active-date" value="" id="active-date" size="8"/>
+            <input type="file" name="file" id="file_upload" onchange="upload();"/>
+            <button id="send_button" onclick="sendData();">submit</button>
+            <br><br>
+            <table id="display_excel_data">
+
+            </table>
+            <br><br>
+          </p>
+    </body>
+</html>

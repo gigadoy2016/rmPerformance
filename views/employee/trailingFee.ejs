@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%=title%></title>
+    <link rel='stylesheet' href='../../css/mycss.css' />
+    <script src="../../js/lib/xlsx.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script> -->
+    <script>
+      // Method to upload a valid excel file
+      function upload() {
+        var files = document.getElementById('file_upload').files;
+        if(files.length==0){
+          alert("Please choose any file...");
+          return;
+        }
+        var filename = files[0].name;
+        var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+        if (extension == '.XLS' || extension == '.XLSX') {
+            //Here calling another method to read excel file into json
+            excelFileToJSON(files[0]);
+        }else{
+            alert("Please select a valid excel file.");
+        }
+      }
+
+      //Method to read excel file and convert it into JSON 
+      function excelFileToJSON(file){
+        try {
+          var reader = new FileReader();
+          reader.readAsBinaryString(file);
+          reader.onload = function(e) {
+
+              var data = e.target.result;
+              var workbook = XLSX.read(data, {
+                  type : 'binary'
+              });
+              var result = {};
+              var firstSheetName = workbook.SheetNames[0];
+              //reading only first sheet data
+              var jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
+              //displaying the json result into HTML table
+              displayJsonToHtmlTable(jsonData);
+              }
+          }catch(e){
+              console.error(e);
+          }
+      }
+
+      function displayJsonToHtmlTable(jsonData){
+        var table=document.getElementById("display_excel_data");
+        jsonData.sort((a,b)=>{
+          const A = a["ic_code"];
+          const B = b["ic_code"];
+          return A - B;
+        });
+
+        console.log(jsonData);
+
+        if(jsonData.length>0){
+            let htmlData='<tr><th>IC Code.</th><th>RM Name</th><th>Trailng</th><th>Month Active</th></tr>';
+            let len = jsonData.length;
+            for(let i=0;i < len;i++){
+                let row = jsonData[i];
+                htmlData += '<tr><td>'+row["ic_code"]+'</td><td>'+row["RM_name"]+'</td><td>'+row["Trailng"] +'</td><td>'+row["month"] +'</td></tr>';
+            }
+            table.innerHTML=htmlData;
+
+            let date = new Date();
+            date.setDate(date.getDate()-1);
+            document.getElementById("st_date").value = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
+        }else{
+            table.innerHTML='There is no data in Excel';
+        }
+      }
+
+      function getDate(txt){
+        // แยกส่วนของวันที่และเวลา
+        const parts = txt.split(" ");
+        const dateParts = parts[0].split("/");
+        const timeParts = parts[1].split(":");
+
+        // สร้างวัตถุ Date โดยใช้ส่วนของวันที่และเวลา
+        const year = parseInt(dateParts[2]);
+        const month = parseInt(dateParts[1]) - 1;
+        const day = parseInt(dateParts[0]);
+        const hours = parseInt(timeParts[0]);
+        const minutes = parseInt(timeParts[1]);
+
+        const date = new Date(year, month, day, hours, minutes);
+        return date;
+      }
+    </script>
+  </head>
+  <body>
+    <%- include('../navigator/navigator') %>
+    <h1>Updated Transaction</h1>
+    <p>
+      <form action="/trailingFee/updated" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" id="file_upload" onchange="upload();"/>
+        <br><br>
+        <table id="display_excel_data"></table>
+        <br><br>
+        <div>
+          Display Date: <input type="text" name="st_date" value="" id="st_date"/>
+        </div>
+        <br>
+        <input type="submit" value="Upload" />
+      </form>
+    </p>
+    
+  </body>
+</html>

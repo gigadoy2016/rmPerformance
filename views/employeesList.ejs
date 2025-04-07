@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='../css/mycss.css' />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/jquery-ui/jquery-ui.js"></script>
+    <script src="../../js/emp.js"></script>
+    <script src="../../js/PivotTable.js"></script>
+    <script src="../../js/dataTables.js"></script>
+    <link rel="stylesheet" href="../../js/jquery-ui/jquery-ui.css">
+    <link rel="stylesheet" href="../../css/dataTables.css">
+    <script>
+        var DATAS = [];
+        var HOME_URL = "http://<%= ipAPI %>";
+        var URL = HOME_URL+"/employees/all/";
+        var user = {name:'Admin',level:'admin'};
+        
+
+        //================================ init ===============
+        $(document).ready(function() {
+          loadEmployee();
+
+          
+        });        
+        
+        //=========================== Load Employee =================
+        function loadEmployee(){
+          var dataTable;
+          $.post(URL, { user: user.name,level:user.level })
+          .done(function(data){
+            // console.log(data);
+            // DATAs = data;
+            console.log(data);
+            dataTable = $('#tableEmployee').DataTable({
+              'data':data,
+              "columns":[
+                  {"data":"employee_id"},
+                  {"data":"name_th"},
+                  {"data":"lastname_th"},
+                  {"data":"licence_id"},
+                  {"data":"licence_type"},
+                  {"data":"licence_exp"},
+                  {"data":"email"},
+                  {"data":"status"}
+                ],
+                "bDestroy": true,
+                "pageLength": 12
+            });
+          });
+
+          $('#tableEmployee tbody').on('click', 'tr', function () {
+            var data = dataTable.row(this).data();
+            console.log(data);
+            let url = HOME_URL+'/employee/'+data.employee_id;
+            window.open(url, '_blank');
+
+          });
+        }
+
+        function test(){
+          loadEmployee();
+          // alert('test');
+        }
+
+    </script>
+
+  </head>
+  <body>
+    <%- include('./navigator') %>
+    <h1><%= title %></h1>
+    <div class="container-fluid">
+        <h2 class="text-center my-3"></h2>
+        <hr>
+        <div class="table-responsive">
+            <table class="display" id="tableEmployee" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>ชื่อ</th>
+                  <th>นามสกุล</th>
+                  <th>Licence ID</th>
+                  <th>Licence Type</th>
+                  <th>Licence Exp</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+        </div>
+    </div>
+    <a href="#" onclick="test();">test</a>
+  </body>
+</html>

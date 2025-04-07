@@ -1,0 +1,98 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <script src="../../js/lib/xlsx.min.js"></script>
+        <style>
+            table{
+                border-collapse: collapse;
+                width: 100%;             
+            };
+            th,td{
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {background-color: #f2f2f2;}
+        </style>
+
+        <script>
+            const file_RT = [];
+            const file_IPO = [];
+            const file_normal = [];
+
+            
+
+            async function upload() {
+                var files = document.getElementById('file_upload').files;
+                let table = "<tr><th>บลจ</th><th>FundName</th><th>Type</th><th>Total FEE</th>";
+                if(files.length==0){
+                    alert("Please choose any file...");
+                    return;
+                }else{
+                    for(let i=0;i < files.length; i++){
+                        let obj;
+                        let file = files[i];
+                        let filename = file.name;
+                        let extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+                        if (extension == '.txt' || extension == '.TXT') {
+                            const txt =await file.text();
+                            
+                            if(filename.indexOf('RT') > 0){
+                                obj = findRT(txt);
+                                obj.filename = filename; 
+                                file_RT.push(obj);
+                                table +="<tr><td>"+obj.fundname+"</td><td>"+filename+"</td><td>RT</td><td>"+obj.totalFee+"</td></tr>";
+                            }else if(filename.indexOf('IPO') > 0){
+                                obj = findIPO(txt);
+                                obj.filename = filename; 
+                                file_IPO.push(obj);
+                                table +="<tr><td>"+obj.fundname+"</td><td>"+filename+"</td><td>IPO</td><td>"+obj.totalFee+"</td></tr>";
+                            }else{
+                                obj = find_107(txt);
+                                obj.filename = filename; 
+                                file_normal.push(obj);
+                                table +="<tr><td>"+obj.fundname+"</td><td>"+filename+"</td><td>107</td><td>"+obj.totalFee+"</td></tr>";
+                            }
+                        }
+                    }
+                }
+                // console.log(file_RT);
+                // console.log(file_IPO);
+                // console.log(file_normal);
+                let tableObj = document.getElementById('display_excel_data');
+                tableObj.innerHTML = table;
+            }
+            function findRT(txt){
+                const fundName = txt.substring(txt.indexOf('Fund : ')+7, txt.indexOf('=')-4);
+                const total_FEE = txt.substring(txt.indexOf('Total of Agent')+30, txt.indexOf(' =============')).trim();
+                obj = {'fundname':fundName, 'totalFee':total_FEE};
+                return obj;
+            }
+            function find_107(txt){
+                const fundName = txt.substring(txt.indexOf('Fund : ')+7, txt.indexOf('=')-4);
+                const total_FEE = txt.substring(txt.length-20).trim();
+                obj = {'fundname':fundName, 'totalFee':total_FEE};
+                return obj;
+            }
+            function findIPO(txt){
+                const fundName = txt.substring(txt.indexOf('Fund : ')+7, txt.indexOf('=')-4);
+                const total_FEE = txt.substring(txt.length-20).trim();
+                obj = {'fundname':fundName, 'totalFee':total_FEE};
+                return obj;
+            }
+        </script>
+    </head>
+    <body>
+        <h1>KSAM รีพอร์ต</h1>
+        <p>
+            <input type="file" name="file" id="file_upload" multiple enctype="multipart/form-data" onchange="upload();"/>
+            <br><br>
+            <table id="display_excel_data">
+
+            </table>
+            <div id="txt"></div>
+            <br><br>
+          </p>
+    </body>
+</html>

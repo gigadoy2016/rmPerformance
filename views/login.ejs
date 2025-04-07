@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%=title%></title>
+    <link rel='stylesheet' href='../css/mycss.css' />
+    <link rel="stylesheet" href="../../js/jquery-ui/jquery-ui.css">
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/jquery-ui/jquery-ui.js"></script>
+    <style>
+        body {font-family: Arial, Helvetica, sans-serif;}
+        form {border: 3px solid #f1f1f1;}
+        
+        input[type=text], input[type=password] {
+          width: 100%;
+          padding: 12px 20px;
+          margin: 8px 0;
+          display: inline-block;
+          border: 1px solid #ccc;
+          box-sizing: border-box;
+        }
+        
+        button {
+          background-color: #04AA6D;
+          color: white;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          cursor: pointer;
+          width: 100%;
+        }
+        
+        button:hover {
+          opacity: 0.8;
+        }
+        
+        .cancelbtn {
+          width: auto;
+          padding: 10px 18px;
+          background-color: #f44336;
+        }
+        
+        .imgcontainer {
+          text-align: center;
+          margin: 24px 0 12px 0;
+        }
+        
+        img.avatar {
+          width: 40%;
+          border-radius: 50%;
+        }
+        
+        .container {
+          padding: 16px;
+        }
+        
+        span.psw {
+          float: right;
+          padding-top: 16px;
+        }
+        
+        /* Change styles for span and cancel button on extra small screens */
+        @media screen and (max-width: 300px) {
+          span.psw {
+             display: block;
+             float: none;
+          }
+          .cancelbtn {
+             width: 100%;
+          }
+        }
+        #sec-login {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .ui-widget-overlay.custom-overlay{
+          background-color: black;
+          background-image: none;
+          opacity: 0.5;
+          z-index: 1040;    
+        }
+    </style>
+    <script>
+      var HOME_URL = "http://<%= ipAPI %>";
+      var URL = HOME_URL+"/user/password/";
+      $(document).ready(function() {
+
+      });
+      function forgotOnClick(){
+        $( "#forgetPassword" ).dialog({
+          modal: true,
+          width: 500,
+          height: "auto",
+          draggable: false,
+          resizable: false,
+          open: function() {$('.ui-widget-overlay').addClass('custom-overlay');},
+          buttons: {
+            Ok: function() {
+              //$( this ).dialog( "close" );
+              // resetPassword();
+              let URL = HOME_URL+'/user/reset-password';
+              let email = document.getElementById('email').value;
+              let oldPass = document.getElementById('oldPass').value;
+              let newPass = document.getElementById('newPass').value;
+              console.log(URL);
+              try{
+                $.post(URL, {'email': email, 'oldPass': oldPass, 'newPass': newPass}, function(result){
+                  //console.log(result);
+                  document.getElementById('msg1').innerHTML = result.ans;
+
+                  $( "#msgError" ).dialog({
+                    modal: true,
+                    open: function() {$('.ui-widget-overlay').addClass('custom-overlay');},
+                    buttons: {
+                      Ok: function() {
+                        $( this ).dialog( "close" );
+                        $( "#forgetPassword" ).dialog( "close" );
+                      }
+                    }
+                  });
+                });
+              }catch{
+                console.log(error);
+              }
+            }
+          }
+        });
+      }
+
+    </script>
+  </head>
+  <body>
+    <div style="width:50%;" id="sec-login">
+        <form action="/signin" method="post">
+            <div class="imgcontainer">
+                <img src="./img/img_avatar.png" alt="Avatar" class="avatar">
+            </div>
+            <div class="container">
+                <label for="uname"><b>Username</b></label>
+                <input type="text" placeholder="Enter Username" name="uname" required>
+            
+                <label for="psw"><b>Password</b></label>
+                <input type="password" placeholder="Enter Password" name="psw" required>
+                    
+                <button type="submit">Login</button>
+                <!-- <label>
+                <input type="checkbox" checked="checked" name="remember"> Remember me
+                </label> -->
+                <%= title %>
+            </div>
+            <div class="container" style="background-color:#f1f1f1;text-align: right;">
+              <a href="#" onclick="forgotOnClick()">Forgot Password</a>
+            </div>
+        </form>
+    </div>
+    <div id="forgetPassword" title="Forgot Password?">
+      <p>Please enter your Email.</p>
+      <div>
+        <input type="text" name="email" id="email" value="" placeholder="Enter Your Email" 
+        style="width:90%" onchange="checkMail();">
+        <img id="imgEmailValidated" class="img-none" src="../../img/true50x50.png" 
+        style="width:5%" />
+      </div>
+      <div>
+        <input type="password" name="oldPass" id="oldPass" value="" 
+        placeholder="Old Password" style="width:90%" >
+      </div>
+      <div>
+        <input type="password" name="newPass" id="newPass" value="" placeholder="New Password" style="width:90%" onchange="alertPass();">
+      </div>
+      <div>
+        <input type="password" name="confirmNewPass" id="confirmNewPass" value="" placeholder="Confirm New Password" style="width:90%">
+      </div>
+    </div>
+    <div id="msgError" title="Alert!">
+      <p><label id="msg1"></label></p>
+    </div>
+    <script>
+      const validateEmail = email => {
+        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        return regex.test(String(email).toLowerCase());
+      };
+
+      const validatePassword = password => {
+        const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/;
+        return regex.test(password);
+      };
+      const validatePasswordMatch = (password, confirmPassword) => {
+        return password === confirmPassword;
+      };
+
+      function alertEmail(){
+        let email = document.getElementById('email');
+        if(!validateEmail(email.value)){
+          alert('Email address is not valid !!');
+          email.focus();
+          email.select();
+        }
+      }
+
+      function alertPass(){
+        let pass = document.getElementById('newPass');
+        if(!validatePassword(pass.value)){
+          alert('"Password must contain at least one uppercase letter, one lowercase letter, and one number" หรือ "Password should be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number" ');
+          pass.focus();
+          pass.select();
+        }
+      }
+      function alertConfirm(){
+        let pass = document.getElementById('newPass').value;
+        let conf = document.getElementById('confirmNewPass').value;
+        if(!validatePasswordMatch(pass,conf)){
+          alert('"Password is not Match!!');
+          pass.focus();
+          pass.select();
+        }else{
+
+        }
+      }
+
+      function checkMail(){
+        let email = document.getElementById('email').value;
+        let URL = HOME_URL+'/user/email/';
+
+        // console.log(URL);
+        $.post(URL, {'email': email}, function(result){
+          // console.log(result);
+          if(result.ans ==1){
+            displayTrue('imgEmailValidated');
+          }else{
+            displayFalse('imgEmailValidated');  
+          }
+        });
+      }
+      
+      function displayTrue(id){
+        document.getElementById(id).src = "../../img/true50x50.png";
+        document.getElementById(id).style.display = 'inline';
+      }
+      function displayFalse(id){
+        document.getElementById(id).src = "../../img/false50x50.png";
+        document.getElementById(id).style.display = 'inline';
+      }
+
+      function resetPassword(){
+        console.log('=== Reset Password =====');
+        let URL = HOME_URL+'/user/reset-password';
+        let email = document.getElementById('email');
+        let oldPass = document.getElementById('oldPass');
+        let newPass = document.getElementById('newPass');
+        console.log(URL);
+        $.post(URL, {'email': email, 'oldPass': oldPass, 'newPass': newPass}, function(result){
+          console.log("-------");
+          console.log(result);
+        });
+      }
+    </script>
+  </body>
+</html>

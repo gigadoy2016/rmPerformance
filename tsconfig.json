@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "es6",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  //"include": ["./public/js/*","./classes/*"]                           // ระบุโฟลเดอร์ที่จะคอมไพล์ไฟล์ TypeScript
+  "include": ["./classes/*"]
+}

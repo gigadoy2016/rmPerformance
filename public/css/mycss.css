@@ -1,0 +1,210 @@
+h1{
+    padding-left: 0.25em;
+}
+
+ul.nav {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+li.nav {
+    float: left;
+}
+
+li.nav a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+li.nav a:hover {
+    background-color: #111;
+}
+#transactions-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#transactions-table th, #transactions-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#transactions-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+
+#pivotTable table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#pivotTable th{
+    border:1px solid gray;
+    text-align: center;
+    padding: 8px;
+}
+#pivotTable td{
+    border:1px solid gray;
+    padding-right: 0.5em;
+}
+#pivotTable tr:nth-child(even){background-color: #f2f2f2}
+
+#pivotTable th {
+    background-color: #4CAF50;
+    color: white;
+}
+#pivotTable .orange{
+    background-color: orange;
+    color:#111;
+}
+
+
+/**/
+.pivotTable table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.pivotTable th{
+    border:1px solid gray;
+    text-align: center;
+    padding: 8px;
+}
+.pivotTable td{
+    border:1px solid gray;
+    padding-right: 0.5em;
+}
+.pivotTable tr:nth-child(even){background-color: #f2f2f2}
+
+.pivotTable th {
+    background-color: #4CAF50;
+    color: white;
+}
+.pivotTable .orange{
+    background-color: orange;
+    color:#111;
+}
+.pivotTable .blue{
+    background-color: #B0DAFF;
+    color:#111;
+}
+
+lable {
+    padding-left: 1em;
+}
+#app{
+    width: 100%;
+}
+
+.user-container {
+    display: flex;
+    background: #37bc9b;
+    /* height: 170px; */
+}
+.user-container2 {
+    display: flex;
+    background: #D2691E;
+    /* height: 170px; */
+}
+.box1 {
+    /* width: 1000px; */
+    /* width: 65%; */
+    background: white;
+    color: black;
+    border: 1px solid #ccd1d9;
+    /*height: 150px;*/
+    margin-top: 0.5em;
+  }
+.box2 {
+    /* width: 200px; */
+    width: 100%;
+    background: white;
+    color: black;
+    border: 1px solid #ccd1d9;
+    /*height: 150px;*/
+    margin-top: 0.5em;
+  }
+  .box3 {
+    /* width: 200px; */
+    width: 100%;
+    background: white;
+    color: black;
+    border: 0px;
+    /*height: 150px;*/
+    margin-top: 0.5em;
+    padding-left: 1em;
+  }
+.box2 .co{
+    text-align: right;
+    vertical-align: text-top;
+    width: 10em;
+    font-weight: bold;
+    padding-right: 0.5em;
+    padding-left: 0.5em;
+    margin-top: 0.5em;
+}
+
+/* .box3{
+    width: 30%;
+} */
+
+  .text-right {
+    text-align: right;
+  }
+.userPerfoemance{
+    text-align: right;
+    vertical-align: text-top;
+    padding-right: 0.5em;
+    width:7em;
+}
+
+.per-red{
+    font-weight: bolder;
+    color: red;
+}
+.per-green{
+    font-weight: bolder;
+    color: green;
+}
+
+/*--------User Form-----------------*/
+#forgetPassword{
+    display: none;
+}
+
+.img-none{
+    display: none;
+}
+.mark {
+    display: block;
+    position: absolute;
+    top: 45px;
+    background: #f00;
+    transform: rotate(-45deg);
+    padding: 1px 3px;
+    border-radius: 3px;
+    color: #000;
+    margin-left: -10px;
+  }
+
+.area1{
+    background-color: #fff;
+}
+.area2{
+    background-color: #fff;
+}
+
+.hidden-button {
+    display: none;
+}
+.emp_zone {
+    margin-left: 1em;
+}

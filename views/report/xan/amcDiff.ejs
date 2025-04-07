@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script>
+        <style>
+            
+        </style>
+
+        <script>
+            function upload() {
+                var files = document.getElementById('file_upload').files;
+                if(files.length==0){
+                    alert("Please choose any file...");
+                    return;
+                }
+                var filename = files[0].name;
+                var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+                if (extension == '.XLS' || extension == '.XLSX') {
+                    //Here calling another method to read excel file into json
+                    excelFileToJSON(files[0]);
+                }else{
+                    alert("Please select a valid excel file.");
+                }
+            }
+            //Method to read excel file and convert it into JSON 
+            function excelFileToJSON(file){
+                console.log("-------------------JSON-------------------------------");
+                try {
+                    var reader = new FileReader();
+                    reader.readAsBinaryString(file);
+                    reader.onload = function(e) {
+                        var data = e.target.result;
+                        var workbook = XLSX.read(data, {type : 'binary'});
+                        var result = {};
+                        var firstSheetName = workbook.SheetNames[0];
+
+                        getData(workbook);
+                    }
+                }catch(e){
+                    console.error(e);
+                }
+            }
+
+            function getData(workbook){
+                let sheet_name_list = workbook.SheetNames;
+                let sheetName = sheet_name_list[0];
+                let sheet = workbook.Sheets[sheetName];
+                let X = 'A';
+                let Y = 2;
+                let positionA = X+Y;
+                let positionB = 'B'+Y;
+                const FCC = [];
+                const WCC = [];
+                while(sheet[positionA] !== undefined){
+                    // console.log( (Y-1)+" "+sheet[positionA].v);
+                    FCC.push(sheet[positionA].v);
+                    if(sheet[positionB] !== undefined)
+                        WCC.push(sheet[positionB].v);
+                    Y++;
+                    positionA = X+Y;
+                    positionB = 'B'+Y;
+                }
+                // console.log(FCC);
+                // console.log(WCC);
+
+                const diffData = FCC.filter(item => !WCC.includes(item));
+                console.log(diffData);
+                let code = '';
+                for(let i=0; i < diffData.length; i++){
+                    code += '<tr><td>'+ diffData[i] + '</td></tr>';
+                }
+                let tableObj = document.getElementById('display_excel_data');
+                tableObj.innerHTML = code;
+            }
+
+        </script>
+    </head>
+    <body>
+        <h1>AMC FCC กับ WCC รีพอร์ต</h1>
+        <p>
+            <input type="file" name="file" id="file_upload" onchange="upload();"/>
+            <br><br>
+            <table id="display_excel_data">
+
+            </table>
+            <br><br>
+          </p>
+    </body>
+</html>

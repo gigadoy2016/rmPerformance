@@ -1,0 +1,219 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <script src="../../js/lib/xlsx.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;             
+            }
+            th, td {
+                text-align: left;
+                padding: 8px;
+                border: 1px solid #ddd;
+            }
+            tr:nth-child(even) { background-color: #f2f2f2; }
+
+            #loading {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            #loading div {
+                width: 50px;
+                height: 50px;
+                border: 5px solid #f3f3f3;
+                border-top: 5px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            #status {
+                margin-top: 10px;
+                font-weight: bold;
+            }
+        </style>
+
+        <script>
+            let excelData = [];
+            function upload() {
+                const files = document.getElementById('file_upload').files;
+                if (files.length === 0) {
+                    alert("Please choose a file...");
+                    return;
+                }
+
+                const file = files[0];
+                const filename = file.name;
+                const extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+
+                if (extension === '.XLS' || extension === '.XLSX' || extension === '.CSV') {
+                    readFile(file,extension);
+                } else {
+                    alert("Please select a valid file (.xls, .xlsx, or .csv).");
+                }
+            }
+
+            function readFile(file, extension) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const data = e.target.result;
+                    try {
+                        let jsonData;
+                        if (extension === '.XLS' || extension === '.XLSX') {
+                            const workbook = XLSX.read(data, { type: "binary" });
+                            const firstSheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[firstSheetName];
+                            jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        } else if (extension === '.CSV') {
+                            jsonData = Papa.parse(data, { header: true, dynamicTyping: true, skipEmptyLines: true, encoding: "UTF-8" }).data;
+                        } else {
+                            throw new Error("Unexpected file format");
+                        }
+                        displayExcelData(jsonData);
+                    } catch (error) {
+                        console.error("Error processing file:", error);
+                        alert("เกิดข้อผิดพลาดในการประมวลผลไฟล์ โปรดตรวจสอบไฟล์อีกครั้ง");
+                    }
+                };
+
+                reader.onerror = function (error) {
+                    console.error("Error reading file:", error);
+                };
+
+                if (extension === '.CSV') {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsBinaryString(file);
+                }
+            }
+
+            function displayExcelData(data) {
+                let table = "<tr>";
+                excelData = [];
+
+                if (data.length > 0) {
+                    const requiredHeaders = ["Account ID", "AMC", "Fund Code", "IC", "Available Balance Unit","As of"];
+
+                    requiredHeaders.forEach(header => table += `<th>${header}</th>`);
+                    table += "</tr>";
+
+                    for (const row of data) {
+                        table += "<tr>";
+                        let rowData = [];
+
+                        requiredHeaders.forEach(header => {
+                            let cellValue = row[header];
+                            if (header === "As of" && cellValue) {
+                                cellValue = formatDate(cellValue);
+                                row["As of"] = cellValue;
+                            }
+                            rowData.push(cellValue || "");
+                        });
+
+                        for (const cell of rowData) {
+                            table += `<td>${cell}</td>`;
+                        }
+                        table += "</tr>";
+                        excelData.push(row);
+                    }
+                } else {
+                    document.getElementById('display_excel_data').innerHTML = "ไม่มีข้อมูลในไฟล์";
+                    document.getElementById('send_button').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('display_excel_data').innerHTML = table;
+                document.getElementById('send_button').style.display = 'block';
+            }
+
+            function formatDate(dateString) {
+                if (!dateString) return "";
+                const parts = dateString.split("/");
+                if (parts.length !== 3) return dateString;
+                const [day, month, year] = parts;
+                return `${year}-${month}-${day}`;
+            }
+
+            function sendData() {
+                const createDateValue = document.getElementById("createDate").value;
+                const data2Send = {
+                    "aum": excelData,
+                    "createDate": createDateValue
+                };
+
+                if (excelData.length === 0) {
+                    alert("No data to send!");
+                    return;
+                }
+
+                const loadingElement = document.getElementById("loading");
+                loadingElement.style.display = "flex";
+
+                fetch('/aum/uploadAUM', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data2Send)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Data successfully uploaded!");
+                        document.getElementById('send_button').style.display = 'none';
+                    } else {
+                        alert("Failed to upload data.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while sending data.");
+                })
+                .finally(() => {
+                    loadingElement.style.display = "none";
+                });
+            }
+
+            function setDefaultDate() {
+                const dateInput = document.getElementById("createDate");
+                const today = new Date();
+                today.setDate(today.getDate() - 1);
+                const tMinusOne = today.toISOString().split('T')[0];
+                dateInput.value = tMinusOne;
+            }
+
+            window.onload = setDefaultDate;
+        </script>
+    </head>
+    <body>
+        <h1>Upload AUM</h1>
+        <p>
+            <input type="file" name="file" id="file_upload" accept=".xlsx,.xls,.csv" onchange="upload();" />
+            Update data at 
+            <input type="text" name="createDate" id="createDate" value="" />
+            <div><button onclick="sendData()" style="display: none;" id="send_button">Upload AUM</button></div>
+            <br><br>
+            <table id="display_excel_data"></table>
+            <div id="loading">
+                <div></div>
+            </div>
+            <div id="status"></div>
+        </p>
+    </body>
+</html>

@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= name %></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+    <link rel='stylesheet' href='../../css/mycss.css' />
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel='stylesheet' href='../../css/ion.rangeSlider.min.css' />
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/jquery-ui/jquery-ui.js"></script>
+    <script src="../../js/emp.js"></script>
+    <script src="../../js/PivotTable.js"></script>
+    <script src="../../js/Promotions.js"></script>
+    <script src="../../js/dataTables.js"></script>
+    <script src="../../js/waitingTable.js"></script>
+    <script src="../../js/ion.rangeSlider.min.js"></script>
+    <script src="../../js/lib/job/jobTable.js"></script>
+
+    <script  src="../../js/fcc/User.js"></script>
+    <script  src="../../js/fcc/Team.js"></script>
+    <script src="../../js/fcc/TransactionTable.js"></script>
+    <link rel="stylesheet" href="../../js/jquery-ui/jquery-ui.css">
+    <link rel="stylesheet" href="../../css/dataTables.css">
+
+    <!-- Custom Theme Style -->
+    <link href="../../css/custom.min.css" rel="stylesheet">
+
+    <style>
+      .tb { 
+        border-collapse: collapse; 
+      }
+      .tb th, .tb td { padding: 5px; border: solid 1px #777; text-align: center;}
+      .tb th { background-color: lightblue; }
+
+      .ui-widget-overlay.custom-overlay{
+        background-color: black;
+        background-image: none;
+        opacity: 0.5;
+        z-index: 1040;
+      }
+    </style>
+    <script>
+        var offsetFee = 0; // ค่าชดเชย 10บาท
+
+        var DATAS = [];
+        var amcSharing;
+        var targetData =[];
+        var pivotTable;
+        var promotion;
+        var wTable;
+        var firstDay
+        var lastDay
+        var YEAR = 0;
+        var u_salary;
+        var u_total;
+        var s_total;
+        var USER_TYPE = 0;    // 0 = หาด้วย employee id แต่ถ้าเป็น 1 หาด้วย Team id
+        
+        // var HOME_URL = "http://<%= ipAPI %>";
+        // var URL = HOME_URL+"/transactions/select/";
+        // const URL_normal = HOME_URL+"/transactions/select/";
+        // const URL_Allotment = HOME_URL+"/transactions/selectAllotment/";
+
+        var HOME_URL = "";
+        var URL = HOME_URL+"/transactions/select/";
+        const URL_normal = HOME_URL+"/transactions/select/";
+        const URL_Allotment = HOME_URL+"/transactions/selectAllotment/";
+        
+        var frontEndFee = 0;
+        var BackEndFee = 0;
+        var trailing_fee = 0;
+        var trailingDate;
+        var performance_1;
+        var SumaryAllFee = 0;
+        var totalPayValue = 0;
+        var totalAvailableBalanceAmount = 0;
+        var value_gp = 0;
+        var txtDate ="";        
+
+        var user = {
+          'name':'<%= data.name_eng %>'
+          ,'lastname':'<%= data.lastname_eng %>'
+          ,'target':'<%= data.target %>'
+          ,'ic_code':'<%= data.ic_code %>'
+          ,'incentive':'<%= data.incentive %>'
+          <% if (permission >= 2) { %>
+            ,'permission':<%= permission %>
+          <% } %>
+        };
+
+        var user_u;
+        var permission = <%= permission %>;
+        if(user.incentive === undefined || user.incentive ==="") {
+          user.incentive = [{incentive:1}];
+        }
+        // console.log("7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        // console.log(user);
+        // console.log("7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        const currentDate = new Date('2024-11-20');
+        YEAR = currentDate.getFullYear();
+        const pastDate = new Date(currentDate.setDate(currentDate.getDate() - 2));
+        const pastDateS = pastDate.getDate()+ '/' + (pastDate.getMonth() + 1) +'/'+ pastDate.getFullYear();
+        
+        function setZero(){
+          frontEndFee= 0;
+          BackEndFee = 0;
+          trailing_fee = 0;
+          trailingDate;
+          performance_1;
+          SumaryAllFee = 0;
+          totalPayValue = 0;
+          totalAvailableBalanceAmount = 0;
+          u_salary =0 ;
+          u_total =0 ;
+          s_total =0 ;
+          value_gp =0;
+          $('#aum_val').html('0');
+        }
+
+        
+        $(document).ready(function() {
+          $( "#tabs" ).tabs();
+          $('#tableTransaction').DataTable();
+          $("#startDate").datepicker({dateFormat: "dd/mm/yy"});
+          $("#endDate").datepicker({dateFormat: "dd/mm/yy"});
+          $("#txt-year").val(YEAR);
+          $( document ).tooltip();
+
+          // สร้างฟังก์ชัน autocompleted สำหรับ TextBox
+          $( "#employee_id" ).autocomplete({
+              source: function(request, response) {
+                  const input = request.term.toLowerCase(); // รับค่าจาก TextBox และแปลงเป็นตัวพิมพ์เล็ก
+                  let URL = HOME_URL+"/employees/search/";
+                  if (user.permission ==3){
+                    URL = HOME_URL+"/employees/search/";
+                  }else if (user.permission == 2){
+                    URL = HOME_URL+"/employees/find/";
+                  }
+
+                  $.ajax({
+                      url: URL,           // ระบุ URL ของไฟล์ที่จะรับค่าข้อมูลจากฐานข้อมูล
+                      type: "POST",       // ระบุเป็น Method POST
+                      dataType: "json",   // ระบุรูปแบบข้อมูลที่จะรับกลับมาเป็น JSON
+                      data: {
+                          word: input,
+                          name: user.name,
+                          lastname: user.lastname,
+                          ic: user.ic_code,
+                          permission: user.permission 
+                      },
+                      success: function(data) {
+                        let output = data.map(item=>{
+                          let value = `${item.ic_code} ${item.name_eng} ${item.lastname_eng}`;
+                          return value;
+                        });
+                        response(output);
+                      }
+                  });
+              },minLength: 1,
+              select: function(event, ui) {
+                // เมื่อเลือกรายการ จะแสดงข้อความที่เลือกใน console
+                // console.log(ui.item.value);
+                // console.log(data);
+              }
+          });
+          init();
+        });
+
+        async function init(){
+          let waiting = document.getElementById("waiting-seaction").style.display = "none";
+          $("#ic_code").html(user.ic_code);
+          $("#target").html(user.target);
+          // $("#past2date").html(pastDateS);
+
+          await submit1();
+          // await tab1Click();
+        }
+        
+        async function loadUser(user){
+          // console.log("-------- load data");
+          user.incentive = checkIncentice(user.incentive);
+          user.performanceSharing = 0;
+          // console.log("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+          // console.log(user);
+          verifyEmployeeStartDate(user,firstDay);
+          // console.log("ooooooooooooooooooooooooooooooooooooooooooooooooo");
+          user_u = user;
+          user_u.FEFee = frontEndFee;
+          let TARGET = 0 ;
+          let TRAILING_FEE = 0;
+          let inc = 0;
+          let salary =0;
+          $("#ic_code").html(user.ic_code);
+
+          if(targetData.target >= 0){
+            $("#target").html(targetData.target.toLocaleString('en-US'));
+            user.target = targetData.target;
+            TARGET = targetData.target;
+          }else{
+            $("#target").html(user.target.toLocaleString('en-US'));
+            TARGET = user.target;
+          }
+
+          $("#fontEndFee").html(frontEndFee.toLocaleString('en-US'));
+          if(user.trailing_fee == null){
+            $("#trailing").html("N/A");
+            $("#trailing-date").html( "");
+            $("#total_fee").html( "N/A");
+            TRAILING_FEE = 0;
+          }else{
+            let txt ="<label id='label-trailing'>"+Math.floor(user.trailing_fee).toLocaleString('en-US')+"</label>";
+            // console.log(user);
+            TRAILING_FEE = user.trailing_fee;
+            if(user.trailing !== undefined ){
+              // date = new Date(user.trailing.date);
+              // op = { day: 'numeric', month: 'short' };
+              // formattedDate = date.toLocaleDateString('en-GB', op);
+              formattedDate = getFormatDate(user.trailing.date);
+              txtDate = "<label style='color:gray'> ("+formattedDate+")</label>";
+              trailingDate = formattedDate;
+            }else{
+              txtDate = "";
+            }
+            
+            t_total = total = user.trailing_fee + frontEndFee;
+            total = Math.floor(total).toLocaleString('en-US');
+            $("#trailing").html( txt);
+            $("#trailing-date").html( txtDate);
+            $("#trailing-date2").html( txtDate);
+            $("#total_fee").html( total);
+            // $("#caption_feeSummary").html( total);
+          }
+          
+          user.performance =  Math.floor(frontEndFee+ user.trailing_fee - TARGET);
+          //user.performance =  Math.floor(total - TARGET);
+          console.log("++++++++++++++++++++++Trailing+++++++++++++++++++++++++++++++");
+          console.log("frontEndFee="+frontEndFee);
+          console.log("user.trailing_fee="+user.trailing_fee);
+          console.log("user.target="+TARGET);
+          console.log("++++++++++++++++++++++Trailing+++++++++++++++++++++++++++++++");
+          console.log(user);
+          console.log("++++++++++++++++++++++Trailing++End++++++++++++++++++++++++++");
+          let className = 'per-red';
+          if(user.performance > 0){
+            className = 'per-green';
+            user.performanceSharing = Math.floor(user.performance * user.incentive[0].incentive);
+          }
+
+          let pf ='<label class="'+className+'">'+ user.performance.toLocaleString('en-US')+'</label>';
+          performance_1 = user.performance.toLocaleString('en-US');
+          $("#performance").html(pf);   
+
+          $("#nameRM").html(user.name_eng+" "+user.lastname_eng+" (ic:"+user.ic_code+")");
+          $("#lastTransactionDate").html(getYesterday());
+          $("#performanceSharing").html(user.performanceSharing);
+          if(user.incentive !== undefined){
+              inc = user.incentive[0].incentive;
+              let performance = (user.performance > 0)?user.performance:0;
+                let title= performance.toLocaleString('en-US')+' x '+(inc * 100)+'%';
+                let text = '<a href="#" title="'+title+'" >'+ ( user.performanceSharing ).toLocaleString('en-US')+'</a>';
+              $("#incentive").html(text);
+          }else{
+              $("#incentive").html('');
+          }
+          if(user.salary !== undefined){
+            if(user.salary.length>0){
+              salary = user.salary[0].base_salary;
+
+              // case ที่ CEO และเจ้าของข้อมูลเห็นได้เท่านั้น permission = 5 และ 1
+              if(permission !== 3 ){
+                u_salary = parseInt(salary).toLocaleString('en-US');
+                $("#caption_totalPay").html('Total:');
+                $("#caption_salary").html('Salary:');
+              }else{
+                u_salary = '0';
+                $("#caption_salary").html('&nbsp;');
+              }
+              $("#salary").html(u_salary);
+            }
+          }else{
+            $("#salary").html(0);
+          }
+          totalPayValue =Math.floor( parseInt(salary) + user.performanceSharing);
+
+          // case ที่ CEO และเจ้าของข้อมูลเห็นได้เท่านั้น permission = 5 และ 1
+          if(permission !== 3 ){
+            u_total = totalPayValue.toLocaleString('en-US');
+          }else{
+            u_total = '';
+            $("#caption_totalPay").html('&nbsp;');
+            
+          }
+          // $('#totalPay').html(u_total);
+          // let wcc_perf = Math.floor(BackEndFee - totalPayValue);
+          // let gp = ((wcc_perf/BackEndFee)*100).toLocaleString('en-US');
+          // if(wcc_perf < 0 ){
+          //   wcc_perf = 0;
+          //   gp = 0;
+          // }
+          // $("#caption_WCCPerf").html(wcc_perf.toLocaleString('en-US'));
+          
+          // $("#caption_gp").html(gp+'%');
+        }
+
+        function checkIncentice(incentive){
+          if(incentive === undefined || incentive ==="") {
+            incentive = [{incentive:1}];
+          }
+          return incentive
+        }
+
+        function getTransactionDate(transaction){
+          // console.log("====get date ============ ");
+          if(transaction.length>0){
+            const transactionDateArr = transaction.map(item => {
+              // if(item.allotment_date != null){
+              if(item.transaction_date != null){
+                const [date, time] = item.transaction_date.split(' ');
+                const [dd, mm, yyyy] = date.split('/');
+                // const [hh, min] = time.split(':');
+                return new Date(yyyy, mm-1, dd);
+              }else{
+                return "N/A";
+              }
+            });
+
+          // หา transaction_date ล่าสุด
+            const latestTransactionDate = new Date(Math.max.apply(null, transactionDateArr));
+            const dateObj = new Date(latestTransactionDate);
+            const formattedDate = dateObj.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return formattedDate;
+          }else{
+            return "N/A";
+          }
+        }
+        function getYesterday(){
+          const today = new Date();
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+
+          const day = yesterday.getDate();
+          const month = yesterday.getMonth() + 1; // เดือนนับจาก 0 ถึง 11, ต้องบวก 1 เพื่อให้ตรงกับรูปแบบที่ต้องการ
+          const year = yesterday.getFullYear();
+          const formattedDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+
+          return formattedDate;
+        }
+
+        async function getSharingPromotion(month,year){
+          const url = HOME_URL +"/amc/sharing/month/"+month+"/"+year;
+          let sharingData =[];
+          await $.get(url,function(){
+            // console.log(">> request Sharing");
+          }).done(function(data){
+            // console.log(">> request Sharing Done");
+            amcSharing = sharingData = data;
+          });
+        }
+        async function getSharing(fundcode,date){
+          const url = HOME_URL +"/amc/fundcode/";
+          try {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                // เพิ่ม headers ที่จำเป็น เช่น Authorization ถ้าจำเป็น
+                // 'Authorization': 'Bearer YOUR_TOKEN'
+              },
+              body: JSON.stringify({
+                fundcode: fundcode,
+                date: date
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json(); // แปลงผลลัพธ์เป็น JSON
+            return data;
+          } catch (error) {
+            console.error('Error fetching sharing data:', error);
+            throw error; // โยน error กลับไปเพื่อให้ผู้ใช้จัดการ
+          }
+        }
+
+
+        async function getTargetMonth(month,year,ic_code){
+          let date= year+'-'+month;
+          const url = HOME_URL +"/amc/target/month/"+date+"/"+ic_code;
+          await $.get(url,function(){
+            // console.log(">> request Target");
+          }).done(function(data){
+            if(data.length > 0){
+              targetData = data[0];
+              // console.log(data[0].target);
+              // $('#target').html(data[0].target);
+              // loadUser(user);
+              if(data[0].target > 0){
+                $("#target").html(data[0].target.toLocaleString('en-US'));
+                user.target = data[0].target;
+              }
+            }else{
+              targetData = [];
+            }
+          });
+        }
+        async function getTarget(month, year, ic_code) {
+          // console.log("getTarget >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+          const date = `${year}-${month}`;
+          const url = `${HOME_URL}/amc/target/month/${date}/${ic_code}`;
+          try {
+            const response = await fetch(url);
+            if (!response.ok) {
+              console.error(`Failed to fetch target data: ${response.status} ${response.statusText}`);
+              return 0;
+            }
+            const data = await response.json();
+            if (data.length > 0) {
+              const target = data[0].target;
+              // console.log(data[0]);
+              return target > 0 ? target : 0;
+            } else {
+              return 0;
+            }
+          } catch (error) {
+            console.error("Error fetching target data:", error);
+            return 0;
+          }
+        }
+
+        function berforeSubmit1(){
+          let employee_zone = document.getElementById("employee_zone");
+          let team_zone = document.getElementById("team_zone");
+          if(employee_zone.style.display == "inline"){
+            // alert('employee');
+            submit1();
+          }else if(team_zone.style.display == "inline"){
+            // alert('team');
+            teamSearch();
+          }
+        }
+        function switchBox(btn){
+          let employee_zone = document.getElementById("employee_zone");
+          let team_zone = document.getElementById("team_zone");
+          if(btn =="employee"){
+            employee_zone.style.display = 'none';
+            team_zone.style.display = 'inline';
+            USER_TYPE = 1; 
+          }else if(btn =="team"){
+            employee_zone.style.display = 'inline';
+            team_zone.style.display = 'none';
+            USER_TYPE = 0;
+          }
+        }
+
+        async function submit1() {
+          if(!validateIC_code()){
+            alert("ไม่สามารถค้นหา Team อื่นได้");
+            return 0;
+          }
+          setZero();
+          loadJobs();  // load Profile ของ RM
+          getDate();
+          let selectedMonth = document.getElementById('month-select').value;
+          let YEAR = $('#txt-year').val();
+          await getSharingPromotion(selectedMonth,YEAR);
+          
+
+          // console.log("======= submit1 ");
+          const startDate =firstDay;
+          const endDate = lastDay;
+          
+          let employeeId = $("#employee_id").val().toUpperCase();
+          // console.log(employeeId);
+
+          if(employeeId ==""){
+            employeeId = user.ic_code;
+          }else if(user.permission ==2 && employeeId ==""){
+            employeeId = user.ic_code;
+          }
+          let ic= employeeId.match(/\d+/)[0];
+          if(employeeId.indexOf("F") >= 0){
+            ic = "F"+ic;
+          }
+          await getTargetMonth(selectedMonth,YEAR, ic);
+          // ตรวจสอบพนักงาน Parttime ถ้าใช่ให้คิดแบบ allotmentdate
+          
+          const url = validateFeelancer(ic,startDate);
+          console.log(url);
+          $.post(url, { startDate: startDate, endDate: endDate, employee: employeeId })
+            .done(function(data) {
+              console.log("==========Query Transactions=========================");
+              console.log(data.trans);
+              DATAs = new Array();
+              DATAS = data;
+              $('#tableTransaction').DataTable({
+                "data": data.trans,
+                "columns":[
+                  {"data":"account_id"},
+                  // {"data":"customer_name"},
+                  {"data":"fund_code"},
+                  {"data":"amount" ,className: "text-right"},
+                  {"data":"status"},
+                  {"data":"transaction_type"},
+                  {"data":"confirmed_amount" ,className: "text-right"},
+                  {"data":"confirmed_units" ,className: "text-right"},
+                  {"data":"transaction_date"},
+                  {"data":"settlement_date"},
+                  {"data":"amc_code"},
+                  // {"data":"settlement_bank"},
+                  {"data":"allotment_date"},
+                  {"data":"nav_date"},
+                  {"data":"allotted_nav" ,className: "text-right"},
+                  {"data":"fee" ,className: "text-right"},
+                  {"data":"withholding_tax" ,className: "text-right"},
+                  {"data":"vat" ,className: "text-right"},
+                  {"data":"xwt_reference_no"}
+                ],
+                "bDestroy": true
+              });
+              tab3Click();
+              // จัดการข้อมูลที่ได้รับกลับจาก server ตามต้องการ
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+              console.log("Error:", textStatus, errorThrown);
+            });
+
+            /*
+            *  Add เพิ่มส่วนที่ ดึงข้อมูล AUM ของ RM
+            */
+          let AUM =  getAUM_byIC(ic,lastDay);
+
+        }
+        async function getAUM_byIC(ic,date){
+          console.log("----Get AUM----"+date);
+          let d = "";
+          try{
+            const response = await fetch(`../../aum/ic/${ic}/${date}`);
+            const json = await response.json();
+            // console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+            // console.log(json);
+            // console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+            if(json.data !== undefined){
+              totalAvailableBalanceAmount =0;
+              if(json.data[0] !== undefined){
+                totalAvailableBalanceAmount = parseFloat(json.data[0].TotalOutstandingBalanceAmount);
+                d ="("+getFormatDate(json.data[0].createDate)+")";
+              }
+            }
+            let aumDisplay = '<label style="color:gray">'+d+'</label> '+ Math.floor(totalAvailableBalanceAmount).toLocaleString('en-US');
+            $('#aum_val').html(aumDisplay);
+            console.log("----Get AUM Success----"+totalAvailableBalanceAmount);
+          }catch (err){
+            console.error('Error fetching data:', err);
+          }
+          
+        }
+
+        function groupBy(array, key){
+          return array.reduce((result, item) => {
+            (result[item[key]] = result[item[key]] || []).push(item);
+            return result;
+          }, {});
+        };
+
+        async function tab1Click(){
+          let trans = DATAS.trans;
+          let json = trans.filter((item) => item.amount !== 0 && item.amount !== null);
+          let transactionTypes = transactionType();
+          json = json.filter((item) => transactionTypes.includes(item.transaction_type));
+          // console.log(json);
+
+          pivotTable = new PivotTable("pivotTable");
+          pivotTable.setUserProfile(DATAS.user);
+          pivotTable.setPermission(user.permission);
+          pivotTable.removeRows();
+          console.log("==Tab2 Click==");
+          //==== Gentable====
+          pivotTable.genFundTable(json);
+          frontEndFee = pivotTable.getFrontEndFee();
+          $("#fontEndFee").html(pivotTable.getCurrency(frontEndFee));
+
+          await loadUser(DATAS.user);
+        }
+
+        async function tab3Click(){
+          console.log("++++++++++++++++++++++++++ trans 2+++++++++++++++++++++++++");
+          // console.log(DATAS);
+          let trans = DATAS.trans;
+          const allottedTrans = trans.filter((trans) => (trans.status === 'ALLOTTED') && trans.transaction_type != 'RED');
+          // const waitingTrans = trans.filter((trans) => trans.status === 'WAITING');
+          //---------------------------------------------------------------------------
+          // วันที่ 26-Jan-2024 เพิ่มเงื่อนไขในการแสดงหน้าจอโดยให้มีท้้ง WAITING และ APPROVED
+          //--------------------------------------------------------------------------- 
+          const waitingTrans = trans.filter((trans) => (trans.status === 'WAITING' || trans.status === 'APPROVED') && trans.transaction_type != 'RED');
+          const switchAMC = trans.filter((trans) => (trans.transaction_type === 'RED' && trans.counter_payment_type === 'COL_SA'));
+
+          // console.log("----------------------------------------------- WAITING และ APPROVED ");
+          let json = allottedTrans.filter((item) => item.confirmed_amount !== 0 && item.confirmed_amount !== null);
+          let transactionTypes = transactionType();
+          json = json.filter((item) => transactionTypes.includes(item.transaction_type));
+          // console.log(json);
+
+          pivotTable = new PivotTable("pivotTable2");
+          if(DATAS.user !== undefined){
+            pivotTable.setUserProfile(DATAS.user);
+            pivotTable.setPermission(user.permission);
+          }else{
+            DATAS.user = {'performance':0};
+            pivotTable.setPermission(5);
+          }
+          await pivotTable.setAMCSharing(amcSharing);
+          pivotTable.removeRows();
+          // console.log("==Tab3 Click==");
+          //==== Gentable====
+          if(json.length>0){
+            pivotTable.genFundTableVer2(json);
+          }
+          frontEndFee =await pivotTable.getFrontEndFee();
+          frontEndFee = Math.floor(frontEndFee);
+          SumaryAllFee =await pivotTable.getBackEndFee();
+          $("#fontEndFee").html(pivotTable.getCurrency(frontEndFee));
+          // $("#caption_feeSummary").html(pivotTable.getBackEndFeeStr()) 2;
+          BackEndFee =await pivotTable.getBackEndFee()
+          
+          // console.log(pivotTable.getgrandTotalSumFrontEndFee());
+          DATAS.user.performance =await pivotTable.getgrandTotalSumFrontEndFee();
+
+          if(DATAS.trans.length >0){
+            if(USER_TYPE == 0){
+              const objUser = new User(DATAS.user.ic_code,DATAS.trans,amcSharing);
+              objUser.setUserData(DATAS.user);
+              const fundCodeName = objUser.getFundCodeName(DATAS.trans);
+              const [objSharing, objTarget] = await Promise.all([
+                  getSharing(fundCodeName, firstDay),
+                  getTarget(selectedMonth, YEAR, DATAS.user.ic_code)
+              ]);
+              DATAS.user.target = objTarget;
+              objUser.setUserData(DATAS.user);
+              objUser.setFundSharing(objSharing);
+              console.log("666 target user 6666666666666666666666666666666666666666666666666");
+              const userTarget = objUser.getTarget();
+              console.log(userTarget);
+              
+              promotion = new Promotions(DATAS.user.ic_code, trans);
+              promotion.setUserPerformance(DATAS.user.performance);
+              let payPromotion = promotion.getPromotion();
+              if(payPromotion !== undefined){
+                objUser.setPromotion(payPromotion);
+              }
+
+              let obj1 = objUser.gen();
+              var tableNew = new TransactionTable('pivotTable3',json);
+              tableNew.setUser(objUser);
+              tableNew.renderTable(obj1);
+
+              await loadUser(DATAS.user);
+            }else{
+              const objTeam = new Team(DATAS);
+              let member = objTeam.getMember();
+              let sum =objTeam.getSalaryTeam();
+
+              const transactions = objTeam.getTransactions();
+
+              for(let i=0; i<member.length; i++){
+                const ic_code = ""+member[i];
+                const transByic = transactions.filter(item => item.ic === ic_code);
+
+                const objUser = new User(ic_code,transByic,amcSharing);
+                objUser.setTarget( objTeam.getTargetByIC(ic_code) );
+                objUser.setIncentive( objTeam.getIncentiveByIC(ic_code) );
+                objUser.setTrailingFee( objTeam.getTrailingByIC(ic_code));
+
+                const fundCodeName = objUser.getFundCodeName(DATAS.trans);
+                objUser.getFundCode(transByic);
+                if(objUser.performance >0){
+                  promotion = new Promotions(ic_code, transByic);
+                  promotion.setUserPerformance(objUser.performance);
+                  let payPromotion = promotion.getPromotion();
+                  if(payPromotion !== undefined){
+                    objUser.setPromotion(payPromotion);
+                  }
+                }
+                let user = objUser.getDetail();
+                objTeam.addMember(user);
+              }
+              objTeam.mergeTransactions();
+              const dataTeam = objTeam.getData();
+              console.log("777จาก DATA  Team 7777777777777777777777777777777777777777777777777777777777777777777");
+              console.log(dataTeam);
+              // console.log("777จาก DATA 7777777777777777777777777777777777777777777777777777777777777777777");
+              // console.log(DATAS);
+              // console.log("7777777777777777777777777777777777777777777777777777777777777777777777");
+              var tableNew = new TransactionTable('pivotTable3',null);
+              tableNew.setTeam(DATAS.team);
+              tableNew.renderTableTeam(dataTeam);
+              tableNew.rederBoxRMPerf();
+            }
+          }
+          
+          
+
+          // ++++++++++++++ Waiting Saction +++++++++++++++++
+          wTable = new waitingTable("waiting-table",waitingTrans);
+          if(waitingTrans.length>0){
+            document.getElementById("waiting-seaction").style.display = "block";
+            wTable.showTable();
+          }else{
+            document.getElementById("waiting-seaction").style.display = "none";
+          }
+          console.log("*************************** Promotion **************************************" + DATAS.user.performance);
+          // console.log(DATAS.user);
+          
+          if(USER_TYPE === 0){
+            promotion = new Promotions(DATAS.user.ic_code, trans);
+            promotion.setUserPerformance(DATAS.user.performance);
+            if(trans.length > 0 ){
+              let payPromotion = promotion.getPromotion();
+              let revenue = Math.floor(payPromotion.revenue);
+              // console.log(payPromotion);
+              $("#caption_feeSummary").html(revenue.toLocaleString('en-US'));
+              $('#promotion_val').html( payPromotion.total_reward.toLocaleString('en-US'));
+              $('#wcc_promotion_val').html( Math.floor(payPromotion.feeAfterWithholdingTaxAndSharing).toLocaleString('en-US'));
+              let wccTrailing = 0;
+              if(DATAS.user.trailing.wccTrailing_fee !== undefined){
+                wccTrailing = Math.floor( DATAS.user.trailing.wccTrailing_fee);            
+              }
+              let show_wccTrailing = wccTrailing.toLocaleString('en-US');
+              $('#caption_wccTrailingFee').html( show_wccTrailing );
+              totalPayValue = totalPayValue + payPromotion.total_reward;
+              // console.log(totalPayValue +"  "+ payPromotion.total_reward);
+              $('#totalPay').html(totalPayValue.toLocaleString('en-US'));
+
+
+              let wcc_perf = Math.floor(payPromotion.feeAfterWithholdingTaxAndSharing + pivotTable.getBackEndFee() + wccTrailing);
+              let gp = 0;
+              if((wcc_perf -totalPayValue) >0 ){
+                gp = (wcc_perf - totalPayValue)/wcc_perf * 100;
+                value_gp = (wcc_perf - totalPayValue);
+              }          
+              console.log("("+wcc_perf +" - "+ totalPayValue+")");
+              $("#caption_WCCPerf").html(wcc_perf.toLocaleString('en-US'));
+              $('#value_gp').html(value_gp.toLocaleString('en-US'));
+              $("#caption_gp").html(Math.floor(gp)+'%');
+            }else{
+              // $('#promotion_val').html( '0');
+              // $('#totalPay').html('0');
+            }
+          }
+        }
+
+        function transactionType(){
+          let checkbox0 = document.getElementById("tranType0");
+          let checkbox1 = document.getElementById("tranType1");
+          let type = [];
+          if(checkbox0.checked){
+            type.push('SUB');
+          }
+
+          if(checkbox1.checked){
+            type.push('SWI');
+          }
+
+          return type;
+        }
+        function SUBClick(){
+          // console.log(pivotTable.filterData(DATAS, "transaction_type", transactionType()));
+          tab1Click();
+        }
+        function SWIClick(){
+          // console.log(pivotTable.filterData(DATAS, "transaction_type", transactionType()));
+          tab1Click();
+        }
+
+        function getDate(){
+          let selectedMonth = document.getElementById('month-select').value;
+          const date = new Date(Date.now());
+          const m = selectedMonth - 1;
+          date.setDate(1);  
+          date.setMonth(m);
+          YEAR = $('#txt-year').val();
+          date.setYear(YEAR);
+            // console.log(date);
+            firstDay = date.toISOString().slice(0, 10);
+            date.setMonth(date.getMonth() + 1, 0);
+            lastDay = date.toISOString().slice(0, 10);
+          return {'firstDay':firstDay, 'lastDay':lastDay};
+        }
+
+        const url = "../../js/emp.js";
+        const request = new XMLHttpRequest();
+        request.open("GET", url);
+        request.responseType = "json";
+        request.send();
+
+
+        async function checkSwitchAMC(trans){
+          // console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+          let result=[];
+            if(trans.length>0){
+              const caseAMC = trans.filter((trans) => (trans.xwt_reference_no != null));
+            console.log(caseAMC);
+            const filteredData = caseAMC.filter(item => caseAMC.filter(i => i.xwt_reference_no === item.xwt_reference_no).length === 1);
+            if(filteredData[0].transaction_type ==='SUB'){
+              result = trans.filter(item =>!(item.xwt_reference_no === filteredData[0].xwt_reference_no ))
+            }
+          }else{
+            result = trans;
+          }
+          
+          console.log(result);
+
+          return result;
+        }
+        //============ Function Debug ==============================//
+        function test(){
+          console.log("test");
+          // console.log(user);
+        }
+
+        function validateIC_code(){
+          let input = document.getElementById('employee_id').value;
+          let button = document.getElementById('btn_search');
+          let ic = user.ic_code;
+          let permission = user.permission;
+
+          if(permission === 2 && input[0] === ic[0]){
+            return true;
+          }else if(input.length == 0){
+            return true;
+          }else if(permission >=3){
+            return true;
+          }
+          return false;
+        }
+        function validateFeelancer(ic,startDate){
+          const date = new Date(startDate);
+          const effectiveStartDate = new Date('2024-07-01');
+          if(ic[0] === 'F' && effectiveStartDate <= date){
+            URL = URL_Allotment;
+          }else{
+            URL = URL_normal;
+          }
+          return URL;
+        }
+        function verifyEmployeeStartDate(user,dateSelect){
+          let userStartDate = new Date(user.start_date);
+          let date_S = new Date(dateSelect);
+          console.log("++++++++++++++++++++ verifyEmployeeStartDate ++++++++++++++++++++++" +userStartDate.toDateString() +" "+date_S.toDateString());
+          if(userStartDate > date_S){
+            let name = user.name_eng+" "+user.lastname_eng;
+            alert("พนักงานรหัส:"+user.ic_code+" "+name+" ยังไม่เริ่มต้นทำงาน");
+            location.reload();
+          }
+        }
+        function getFormatDate(d){
+          const today = new Date(d);
+          const day = today.getDate();
+          const month = today.getMonth() + 1;
+          const year = today.getFullYear();
+          const formattedDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+          return formattedDate;
+        }
+
+      /*****************************************************************
+        Section Search data by team.
+      ******************************************************************/
+      function teamSearch(){
+        console.log("---------------------------------- teamSearch -");
+        const URL_Team=HOME_URL+"/transaction/team/";
+        setZero();
+        const date = getDate();
+        const teamName = document.getElementById('select_team').value;
+        const param = {
+          startDate: date.firstDay,
+          endDate: date.lastDay,
+          team:teamName
+        };
+
+        fetch(URL_Team, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(param),
+          }).then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          }).then((data) => {
+            console.log("==========Query Transactions=========================");
+            console.log(data);
+            // console.log(data.trans);
+            DATAs = [];
+            DATAS = data;
+
+          $('#tableTransaction').DataTable({
+            data: data.trans,
+            columns: [
+              { data: "account_id" },
+              // { data: "customer_name" },
+              { data: "fund_code" },
+              { data: "amount", className: "text-right" },
+              { data: "status" },
+              { data: "transaction_type" },
+              { data: "confirmed_amount", className: "text-right" },
+              { data: "confirmed_units", className: "text-right" },
+              { data: "transaction_date" },
+              { data: "settlement_date" },
+              { data: "amc_code" },
+              // { data: "settlement_bank" },
+              { data: "allotment_date" },
+              { data: "nav_date" },
+              { data: "allotted_nav", className: "text-right" },
+              { data: "fee", className: "text-right" },
+              { data: "withholding_tax", className: "text-right" },
+              { data: "vat", className: "text-right" },
+              { data: "xwt_reference_no" },
+            ],
+            bDestroy: true,
+          });
+
+          tab3Click();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+      async function loadTeam(team){
+
+      }
+    </script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  </head>
+  <body>
+    <% if (permission >= 3) { %>
+    <%- include('./navigator/navigator') %>
+    <% }else { %>
+    <%- include('./navigator/nav_lv1') %>
+    <% }; %>
+    <h1 id="nameRM"><%= name %></h1>
+    <div id="app" class="user-container">
+      <div class="row box3" >
+        <label class="col-12 col-sm-12 col-md-6 col-xl-6 box2">
+          <h2>Performance report as of :<label id="lastTransactionDate">N/A</label></h2>
+
+          <label for="startDate"> Start Date:</label>
+          <select id="month-select">
+            <option value="1">มกราคม</option>
+            <option value="2">กุมภาพันธ์</option>
+            <option value="3">มีนาคม</option>
+            <option value="4">เมษายน</option>
+            <option value="5">พฤษภาคม</option>
+            <option value="6">มิถุนายน</option>
+            <option value="7">กรกฎาคม</option>
+            <option value="8">สิงหาคม</option>
+            <option value="9">กันยายน</option>
+            <option value="10">ตุลาคม</option>
+            <option value="11">พฤศจิกายน</option>
+            <option value="12">ธันวาคม</option>
+          </select>
+          <input type="number" id="txt-year" name="year" value="" size="4" style="width: 4em;height: 1.5em;"/>
+          <script>
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1; // เดือนปัจจุบันจะเริ่มที่ 0 (มกราคม) จึงต้องบวก 1 เพื่อให้เป็นเดือนจริง
+            const monthSelect = document.getElementById('month-select');
+            const options = monthSelect.options;
+          
+            for (let i = 0; i < options.length; i++) {
+              if (options[i].value == currentMonth) {
+                options[i].selected = true;
+                break;
+              }
+            }
+            let selectedMonth = options[monthSelect.selectedIndex].value;
+
+            monthSelect.addEventListener('change', (event) => {
+              selectedMonth = event.target.value;
+            });
+          </script>
+          <!-- <input id="startDate" name="startDate" size="13" value="01/02/2023"> -->
+    
+          <!-- <label for="endDate"> End Date:</label>
+          <input  id="endDate" name="endDate" size="13" value="28/02/2023"> -->
+    
+          <% if (permission >= 2) { %>
+            <span style="width: 15em; border:0px solid black; margin-left: 2em;margin-right: 2em;">
+              <span id="employee_zone" class="emp_zone" style="display: inline;">
+                <label for="employee_id"> <a href="#" onclick="switchBox('employee');">Employee</a>:</label>
+                <input id="employee_id" name="employee" size="20" 
+                placeholder="insert...name or name"   onclick="this.select();" >
+              </span>
+              <span id="team_zone" class="emp_zone" style="display: none;">
+                <label for="team_id"> <a href="#" onclick="switchBox('team')">Team</a>:</label>
+                <select id="select_team">
+                  <option value="0">-----------select--------</option>
+                  <option value="WealthConcept">WealthConcept</option>
+                  <option value="TE01">Team 1</option>
+                  <option value="TE02">Team 2</option>
+                  <option value="TE02_1">Team 2/1</option>
+                  <!-- <option value="TE02_2">Team 2/2</option>
+                  <option value="TE02_3">Team 2/3</option>
+                  <option value="TE02_4">Team 2/4</option>
+                  <option value="TE02_5">Team 2/5</option>
+                  <option value="TE02_6">Team 2/6</option> -->
+                  <!-- <option value="TE03">Team 3</option> -->
+                  <option value="TE04">Team 4</option>
+                  <option value="TE05">Team 5</option>
+                  <option value="TE06">Team 6</option>
+                  <option value="TE07">Team 7</option>
+                </select>
+              </span>
+            </span>
+          <% }else { %>
+            <input type="hidden" name="employee" id="employee_id" value="">
+          <% }; %>
+          <!-- <input type="text" name="hidden" id="hidden" value=""> -->
+    
+          <!-- <input id="clear" name="clear" type="reset" value="Clear"> -->
+          <button id="btn_search" type="submit" onclick="berforeSubmit1();">Search</button>
+          <!-- <button onclick="test();">TEST</button> -->
+          <div>
+            <label style="font-style: italic;color: gray;">*Allotted date</label>
+            <span id="past2date" style="border: 0px solid gray;width: 100em;height:auto;color:red">T-2 </span>
+          </div>
+        </label>
+        <label class="col-12 col-sm-12 col-md-6 col-xl-2">
+          <table class="box1 col-12">
+            <tr><td style="text-align: center;background-color: #e4ca09;" colspan="3">WCC Revenue</td></tr>
+            <tr><td class="co" colspan="2">Front end fee:</td><td id="caption_feeSummary" class="userPerfoemance"></td></tr>
+            <tr><td class="co">Trailing fee:</td><td id="trailing-date2" class="userPerfoemance" ></td><td colspan="2" class="userPerfoemance" id="caption_wccTrailingFee"></td></tr>
+            <tr><td class="co">Promotion:</td><td></td><td class="userPerfoemance" id="wcc_promotion_val"></td></tr>
+            <tr><td class="co" colspan="2">Total Revenue:</td><td class="userPerfoemance" id="caption_WCCPerf"></td></tr>
+            <tr><td class="co">Net revenue:</td><td></td><td class="userPerfoemance" id="value_gp">&nbsp;</td></tr>
+            <tr><td class="co" colspan="2">Net Sharing</td><td class="userPerfoemance" id="caption_gp"></td></tr>
+          </table>
+        </label>
+        <label class="col-12 col-sm-12 col-md-6 col-xl-2">
+          <table class="box1 col-12" >
+            <tr><td class="co">&nbsp;</td><td class="userPerfoemance"></td><td></td></tr>
+            <tr><td class="co"> AUM:</td><td colspan="2" class="userPerfoemance" id="aum_val"></td></tr>
+            <tr><td style="text-align: center;background-color: #f2a93b;" colspan="3">RM INCENTIVE</td></tr>
+            <tr>
+              <td class="co" id="caption_salary"> &nbsp;</td>
+              <td ></td>
+              <td id="salary" class="userPerfoemance"></td>
+              <script>
+                const salaryElement = document.getElementById("salary");
+              
+                salaryElement.addEventListener("mouseover", () => {
+                  salaryElement.classList.add("show"); // เพิ่ม class เพื่อแสดงค่า salary จริง
+                });
+              
+                salaryElement.addEventListener("mouseout", () => {
+                  salaryElement.classList.remove("show"); // ลบ class เพื่อซ่อน salary
+                });
+              </script>
+            </tr>
+            <tr><td class="co">Sharing: </td><td></td><td id="incentive" class="userPerfoemance"></td></tr>
+            <tr><td class="co">Promotion:</td><td></td><td id="promotion_val"  class="userPerfoemance">0.</td></tr>
+            <tr><td class="co" id="caption_totalPay"> </td><td></td><td id="totalPay" class="userPerfoemance"></td></tr>
+          </table>
+        </label>
+        <!--
+          Box RM Start
+        -->
+        <label class="col-12 col-sm-12 col-md-6 col-xl-2">
+          <table class="box1 col-12" >
+            <tr><td class="co" id="label_ic">IC: </td><td></td><td id="ic_code" class="userPerfoemance">11</td></tr>
+            <tr><td class="co">Target: </td><td></td><td id="target" class="userPerfoemance"></td></tr>
+            <tr><td style="text-align: center;background-color: #37bc9b;" colspan="3">RM Performance</td></tr>
+            <tr><td class="co">Front end fee:</td><td></td><td id="fontEndFee" class="userPerfoemance"></td></tr>
+            <tr><td class="co">Trailing fee:</td><td id="trailing-date"></td><td id="trailing" class="userPerfoemance"></td></tr>
+            <tr><td class="co">Total fee: </td><td></td><td id="total_fee" class="userPerfoemance"></td></tr>
+            <tr><td class="co">Performance: </td><td></td><td id="performance" class="userPerfoemance"></td></tr>
+          </table>
+        </label>
+        <!--
+          Box RM Start End.
+        -->
+      </div>
+    </div>
+    
+    <div id="tabs">
+      <ul>
+        <li><a href="#tabs-3" onclick="tab3Click();">Result</a></li>
+        <li><a href="#tabs-1" onclick="tab1Click();" <% if (permission < 9) { %> style="display: none;"<% } %>  >Result 2</a></li>
+        <li><a href="#tabs-2" <% if (permission < 3) { %> style="display: none;" <% } %> >Transactions</a></li>
+      </ul>
+      <div id="tabs-3">
+        <hr>
+        <div><h4>Allottment Transactions.</h4></div>
+        <div>
+          <table id="pivotTable2" style="display:none;width: 100%;" class="pivotTable">
+            <tr>
+              <th class="f-code" rowspan="2">Fund Code</th>
+              <th colspan="2">SUB</th>
+              <th colspan="2" class="orange">SWI</th>
+              <th rowspan="2" class="blue">Total Amount</th>
+              <th rowspan="2" class="blue">Total Front End Fee</th>
+            </tr>
+            <tr>
+              <th>Amount</th>
+              <!-- <th>Sum of Fee</th>
+              <th>WH</th>
+              <th>Net</th>
+              <th>SellingFee</th> -->
+              <th>Front End Fee</th>
+              <th class="orange">Amount</th>
+              <!-- <th class="orange">Sum of Fee</th>
+              <th class="orange">WH</th>
+              <th class="orange">Net</th>
+              <th class="orange">SellingFee</th> -->
+              <th class="orange">Front End Fee</th>
+              <!-- <th></th><th></th> -->
+            </tr>
+          </table>
+        </div>
+        <br/>
+        <div>
+          <table id="pivotTable3" style="width: 100%;" class="pivotTable">
+            <tr>
+              <th class="f-code" rowspan="2">Fund Code</th>
+              <th colspan="2">SUB</th>
+              <th colspan="2" class="orange">SWI</th>
+              <th rowspan="2" class="blue">Total Amount</th>
+              <th rowspan="2" class="blue">Total Front End Fee</th>
+            </tr>
+            <tr>
+              <th>Amount</th>
+              <th>Front End Fee</th>
+              <th class="orange">Amount</th>
+              <th class="orange">Front End Fee</th>
+            </tr>
+          </table>
+        </div>
+        <div style="margin-top:1em" id="waiting-seaction" class="tb row">
+          <h4>Waiting Transactions.</h4>
+          <table class="col-6" id="waiting-table">
+            <tr>
+              <th>no.</th>
+              <th>fund code</th>
+              <th>amount</th>
+              <th>transaction type</th>
+              <th>status</th>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div id="tabs-1">
+        <div>
+          <span onclick="SUBClick()">
+            <input type="checkbox" id="tranType0" name="tranType" value="SUB" checked>
+            <label for="tranType">SUB</label>
+          </span>
+          <span style="margin-left: 2em;" onclick="SWIClick()">
+            <input type="checkbox" id="tranType1" name="tranType" value="SWI" checked>
+            <label for="tranType">SWI</label>
+          </span>
+        </div>
+        <hr>
+        <table id="pivotTable" style="width: 100%;">
+          <tr>
+            <th class="f-code" rowspan="2">Row Labels</th>
+            <th colspan="6">SUB</th>
+            <th colspan="6" class="orange">SWI</th>
+            <th rowspan="2">Total Amount</th><th rowspan="2">Total Front End Fee</th>
+          </tr>
+          <tr>
+            <th>Sum of Amount</th><th>Sum of Fee</th><th>WH</th><th>Net</th><th>SellingFee</th><th>Front End Fee</th>
+            <th class="orange">Sum of Amount</th><th class="orange">Sum of Fee</th><th class="orange">WH</th><th class="orange">Net</th>
+            <th class="orange">SellingFee</th><th class="orange">Front End Fee</th>
+            <!-- <th></th><th></th> -->
+          </tr>
+        </table>
+      </div>
+      <div id="tabs-2">
+        <div class="container-fluid">
+          <h2 class="text-center my-3"></h2>
+          <hr>
+          <div class="table-responsive">
+            <table class="display" id="tableTransaction" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Account ID</th>
+                  <!-- <th>Customer Name</th> -->
+                  <th>Fund Code</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Type</th>
+                  <th>Confirmed Amount</th>
+                  <th>Confirmed Units</th>
+                  <th>Trasaction Date</th>
+                  <th>Settlement Date</th>
+                  <th>AMC Code</th>
+                  <!-- <th>Bank</th> -->
+                  <th>Allotment Date</th>
+                  <th>NAV Date</th>
+                  <th>Allotted NAV</th>
+                  <th>Fee</th>
+                  <th>W-Tax</th>
+                  <th>VAT</th>
+                  <th>XWT</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 1em;" id="div-xls">
+        <form action="../xls/export" method="POST">
+          <input type="hidden" name="d" value="" id="user_data"/>
+          <button onclick="excel();">Export Excel.</button>
+        </form>      
+      </div>
+    </div>
+    
+    <script>
+      function excel(){
+      
+        console.log("Excel funtion");
+
+        let asof = $("#lastTransactionDate").html();
+        let month = $("#month-select").val();
+        let year = $("#txt-year").val();
+        let fontEndFee =$("#fontEndFee").html();
+        let TFee =$("#label-trailing").html();
+        let TotalFee =$("#total_fee").html();
+        let TFeeDate =trailingDate +" "+ year;
+
+        let json ={
+          "ic":user_u.ic_code,
+          "first_name":user_u.name_eng,
+          "last_name":user_u.lastname_eng,
+          "reportAsOf":asof,
+          "month":month-1,
+          "year":year,
+          "target":user_u.target,
+          "FEFee":fontEndFee,
+          "TFee":TFee,
+          "TFeeDate":TFeeDate,
+          "totalFee":TotalFee,
+          "performance":performance_1,
+          "data":{
+            "allottment":pivotTable.getAllottment(),
+            "waitting":wTable.getWaittingTrans()
+          },
+          "sum":pivotTable.getSum(),
+          "trans":DATAS.trans
+        }
+        document.getElementById("user_data").value = JSON.stringify(json);
+        console.log(json);
+      }
+
+    </script>
+
+    <!---------------------------------------------------------------------------------------------------------------------------->
+    <!--                                             Section Action Plan!!                                                      -->
+    <!---------------------------------------------------------------------------------------------------------------------------->
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2> Action Plan </h2>
+            &nbsp;&nbsp;<button type="button" class="btn btn-info btn-lg" id="createJob_btn" onClick="screenCreateJob()">Create Job</button>
+            <script>
+
+              function screenCreateJob(){
+                if(user.ic_code == undefined || user.ic_code.trim() == ''){
+                  alert("You have not ic code !!");
+                  return 0;
+                }
+                let URL = HOME_URL+'/job/create/'+user.ic_code;
+                window.open(URL,"_blank");
+              }
+              
+              function loadJobs(){
+                let ic_code = $( "#employee_id" ).val();
+                let month = $("#month-select").val();
+                let year = $("#txt-year").val();
+                if(ic_code == ""){
+                  ic_code = user.ic_code;
+                }else{
+                  ic_code = ic_code.split(" ")[0];
+                }
+                let URL = HOME_URL+"/job/read";
+                $.ajax({
+                      url: URL,       
+                      type: "POST",   
+                      dataType: "json",
+                      data: {
+                          ic_code:ic_code
+                          ,month:month
+                          ,year:year
+                          ,permission:user.permission
+                          ,created:Date.now()
+                      },
+                      success: function(data) {                        
+                        const jTable = new JobTable('table-job',data);
+                        jTable.setPermission(user.permission);
+                        jTable.getContent();
+                      }
+                  });
+              }
+
+            </script>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+
+            <p></p>
+
+
+            <table class="table table-striped projects" id="table-job">
+              <thead>
+                <tr>
+                  <th style="width: 1%">#</th>
+                  <th style="width: 20%">ลูกค้า</th>
+                  <th style="width: 50%">วัตถุประสงค์</th>
+                  <th>ยอด</th>
+                  <th>Status</th>
+
+                </tr>
+              </thead>
+              <tbody>
+                
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="dialog-create-job" title="Create Job">
+      <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>--------------</p>
+    </div>
+    <script>
+      
+    </script>
+  </body>
+</html>

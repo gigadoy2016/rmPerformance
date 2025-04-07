@@ -1,0 +1,118 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script> -->
+        <script src="../../js/lib/xlsx.min.js"></script>
+        <style>
+            table{
+                border-collapse: collapse;
+                width: 100%;             
+            };
+            th,td{
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {background-color: #f2f2f2;}
+        </style>
+
+        <script>
+            function upload() {
+                var files = document.getElementById('file_upload').files;
+                if(files.length==0){
+                    alert("Please choose any file...");
+                    return;
+                }
+                var filename = files[0].name;
+                var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+                if (extension == '.XLS' || extension == '.XLSX') {
+                    //Here calling another method to read excel file into json
+                    excelFileToJSON(files[0]);
+                }else{
+                    alert("Please select a valid excel file.");
+                }
+            }
+            //Method to read excel file and convert it into JSON 
+            function excelFileToJSON(file){
+                console.log("-------------------JSON-------------------------------");
+                try {
+                    var reader = new FileReader();
+                    reader.readAsBinaryString(file);
+                    reader.onload = function(e) {
+                        var data = e.target.result;
+                        var workbook = XLSX.read(data, {type : 'binary'});
+                        var result = {};
+                        var firstSheetName = workbook.SheetNames[0];
+                        
+                        console.log(workbook.SheetNames.length);
+                        if(workbook.SheetNames.length > 0){
+                            let table = displaySheetExcel(workbook);
+                            document.getElementById('display_excel_data').innerHTML = table;
+                        }else{
+                            alert("No Sheet in File Excel!!!");
+                        }                        
+                    }
+                }catch(e){
+                    console.error(e);
+                }
+            }
+
+            function displaySheetExcel(workbook){
+                const x = 'I';
+                let y = 5;
+                const sheet_name_list = workbook.SheetNames;
+
+                let table = "<tr><th>FundCode</th><th>Total Fee</th><th>VAT</th><th>FEE</th>";
+
+                for(let i=0;i < sheet_name_list.length;i++){
+                    const sheetName = sheet_name_list[i];
+                    const sheet = workbook.Sheets[sheetName];
+                    console.log("--------------------------");
+                    // console.log(sheetName);
+                    let position = x+y;
+                    let total_fee = 0;
+                    let vat = 0;
+                    let fee = 0;
+                    while(sheet[position] !== undefined){                        
+                        // console.log(sheetName+ "["+x+"] +fee:"+sheet[position].v);
+                        let fix = 'A'+y;                        
+                        position = x+y;
+                        if(sheet[fix] == undefined){
+                            break;
+                        }
+                        if(sheet[fix].v == "TOTAL FEE"){
+                            total_fee = sheet[position].v;
+                        }
+                        if(sheet[fix].v == "VAT"){
+                            vat = sheet[position].v;
+                        }
+                        if(sheet[fix].v == "FEE (EXCLUDE VAT)"){
+                            fee = sheet[position].v;
+                        }
+                        
+                        y=y+1;
+                    }
+                    y = 5;
+                    // console.log(sheetName+ " fee:"+value);
+                    // let fundCode = sheet['A5'].v;
+                    table += "<tr><td>"+sheetName+"</td><td>"+total_fee+"</td><td>"+vat+"</td><td>"+fee+"</td>";
+                    console.log(sheetName+"="+total_fee+","+vat+","+fee);
+                }
+                return table;
+            }
+
+        </script>
+    </head>
+    <body>
+        <h1>SCB รีพอร์ต</h1>
+        <p>
+            <input type="file" name="file" id="file_upload" onchange="upload();"/>
+            <br><br>
+            <table id="display_excel_data">
+
+            </table>
+            <br><br>
+          </p>
+    </body>
+</html>

@@ -1,0 +1,136 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <link rel='stylesheet' href='../../../css/mycss.css' />
+        <link rel="stylesheet" href="../../../css/bootstrap.min.css">
+        <script src="../../../js/jquery.js"></script>
+        <script src="../../../js/DateTime.js"></script>
+        <script src="../../../js/jquery-ui/jquery-ui.js"></script>
+        <link rel="stylesheet" href="../../../js/jquery-ui/jquery-ui.css">
+        <link rel="stylesheet" href="../../../css/dataTables.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+        <style>
+            #customers {
+              font-family: Arial, Helvetica, sans-serif;
+              border-collapse: collapse;
+              width: 100%;
+            }
+            
+            #customers td, #customers th {
+              border: 1px solid #ddd;
+              padding: 8px;
+            }
+            
+            #customers tr:nth-child(even){background-color: #f2f2f2;}
+            
+            #customers tr:hover {background-color: #ddd;}
+            
+            #customers th {
+              padding-top: 12px;
+              padding-bottom: 12px;
+              text-align: left;
+              background-color: #04AA6D;
+              color: white;
+            }
+            </style>
+    
+		<script>            
+            var DATAs = [];
+            // const jobs =  JSON.parse(DATAs);
+            // console.log(JSON.parse(DATAs));
+            const date = new DateTime();
+
+            function genTable(jobs){
+                removeRows('customers');
+                const table = document.getElementById('customers');
+
+                for(let i =0 ;i < jobs.length; i++){
+                    const job = jobs[i];
+                    const lastRow = table.rows.length;
+                    const row = table.insertRow(lastRow);
+                    const cell0 = row.insertCell(0);
+                    const cell1 = row.insertCell(1);
+                    const cell2 = row.insertCell(2);
+                    const cell3 = row.insertCell(3);
+                    const cell4 = row.insertCell(4);
+                    const cell5 = row.insertCell(5);
+                    const cell6 = row.insertCell(6);
+                    const cell7 = row.insertCell(7);
+                    const cell8 = row.insertCell(8);
+
+                    cell0.innerHTML = job.job_id;
+                    cell1.innerHTML = job.ic;
+                    cell2.innerHTML = job.status;
+                    cell3.innerHTML = job.customer_name;
+                    cell4.innerHTML = job.target;
+                    cell5.innerHTML = job.approver;
+                    cell6.innerHTML = date.convertDate2(job.target_time);
+                    cell7.innerHTML = date.convertDate2(job.target_time2);
+                    cell8.innerHTML = job.text;
+                }
+            }
+            function removeRows(table_id){
+                let table = document.getElementById(table_id);
+                if(table.rows.length > 1){
+                    for (let i = table.rows.length; i > 1; i--) {
+                        table.deleteRow(1);
+                    }
+                }  
+            }
+            async function getData(){
+                const date = document.getElementById('month').value;
+                // console.log(date);
+                const URL = '/job/api/'+date;
+                const response = await fetch(URL);
+                const result = await response.json();
+                DATAs = result;
+                console.log(result);
+                genTable(result);
+            }
+            function excel(){
+                if(DATAs.length >0){
+                    try{
+                        const table = document.getElementById("customers");
+                        const wb = XLSX.utils.book_new();
+                        const ws = XLSX.utils.table_to_sheet(table);
+                        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                        
+                        XLSX.writeFile(wb, "RM_action_plan1.xlsx");
+                    }catch(err){
+                        console.log(err);
+                    }
+                }else{
+                    alert('กรุณาเลือกวันและเวลา..');
+                }
+                
+            }
+
+		</script>
+    </head>
+    <body style="padding: 1em;" >
+        <% if (permission == 3) { %>
+        <%- include('../navigator/navigator') %>
+        <% }else { %>
+        <%- include('../navigator/nav_lv1') %>
+        <% }; %>
+        <div >
+            <br/>
+            <div class="row" style="padding-left: 1em;">
+                <input type="month" id="month" name="month" onChange="getData()">
+                <button onclick="excel();">Excel</button> 
+
+            </div>
+            <div id="table">
+                <table id="customers">
+                    <tr>
+                        <th>job_id</th><th>ic</th><th>status</th><th>customer name</th>
+                        <th>target</th><th>approver</th><th>date</th><th>date</th><th>message</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+    </body>
+</html>

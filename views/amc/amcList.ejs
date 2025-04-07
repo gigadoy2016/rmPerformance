@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= title %></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel='stylesheet' href='../../css/mycss.css' />
+        <link rel='stylesheet' href='../../css/responsive.css' />
+        <link rel="stylesheet" href="../../js/jquery-ui/jquery-ui.css">
+        <link rel="stylesheet" href="../../css/dataTables.css">
+        <script src="../../js/jquery.js"></script>
+        <script src="../../js/jquery-ui/jquery-ui.js"></script>
+        <script src="../../js/dataTables.js"></script>
+        <script>
+            var HOME_URL = "";
+            var DATAs = [];
+            var amc_name = null;
+            var amc_id = null;
+            var fund_code = null;
+            $(document).ready(function() {
+                console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+                var dataTable;
+                $.post( HOME_URL+"/amc/listFund", function( data ) {
+                    DATAs = data;
+                    console.log(data);
+                    dataTable = $('#amc-list').DataTable({
+                        "data":data,
+                        "columns":[
+                            {"data":"amc_name"},
+                            {"data":"fund_code"},
+                            {"data":"fund_name"}
+                        ],
+                        "bDestroy": true
+                    });
+                });
+
+                $('#amc-list tbody').on('click', 'tr', function () {
+                    var data = dataTable.row(this).data();
+                    amc_name = data.amc_name;
+                    amc_id = data.amc_id;
+                    fund_code = data.fund_code;
+                    loadSharing(data.amc_id,data.sharing);
+                    $("#fund_name").html(data.fund_name);
+                    $( "#dialog-form" ).dialog({title:data.fund_code}).dialog( "open");
+                    // document.getElementById('default_sharing').innerHTML = (data.sharing * 100);
+                });
+
+                $("#dialog-form").dialog({
+                    autoOpen: false,
+                    modal: true,
+                    open: function() {$('.ui-widget-overlay').addClass('custom-overlay');},
+                    buttons: {
+                        OK: function() {$(this).dialog("close");}
+                    },
+                    title: "Success",
+                    width: 600, // overcomes width:'auto' and maxWidth bug
+                    maxWidth: 800,
+                    height: 'auto',
+                    fluid: true, //new option
+                });
+                $('#add-form').dialog({
+                    autoOpen: false,
+                    modal: true,
+                    open: function() {$('.ui-widget-overlay').addClass('custom-overlay');},
+                    buttons: {
+                        OK: function() {
+                            validate();
+                        },
+                        'Cancel':function() {$(this).dialog("close");}
+                    },
+                    width: 400, // overcomes width:'auto' and maxWidth bug
+                    maxWidth: 400,
+                    height: 400,
+                    fluid: true, //new option
+                });
+            });
+
+            function loadSharing(id,sharing){
+                console.log("function loadSharing()");
+                console.log(sharing);
+                document.getElementById("default_sharing").innerHTML = (sharing * 100);
+                $.get( HOME_URL+"/amc/sharing/"+id , function( data ) {
+                    if(data.length >0 ){
+                        tableData("amc_sharing",data);
+                    }else{
+                        settableZero("amc_sharing");
+                    }
+                });
+            }
+
+            function tableData(table_id,datas){
+                // console.log(datas);            
+                let table = document.getElementById(table_id);
+                removeRows(table_id);
+                for(let i=0; i < datas.length;i++){
+                    let data = datas[i];
+                    // amc_id= data.amc_id;
+                    // amc_name= data.amc_name;
+                    
+                    let start = new Date(data.promotion_start_date);
+                    let end = null;
+                    if(data.promotion_end_date){
+                        end = new Date(data.promotion_end_date).toLocaleDateString('en-CA');
+                    }else{
+                        end = '-';
+                    }
+                    
+
+                    let row = table.insertRow(table.rows.length);
+                    let cell0 = row.insertCell(0);
+                    cell0.innerHTML = i+1;
+                    let cell1 = row.insertCell(1);
+                    cell1.innerHTML = (data.sharing*100) +'%';
+                    let cell2 = row.insertCell(2);
+                    cell2.innerHTML = start.toLocaleDateString('en-CA');
+                    let cell3 = row.insertCell(3);
+                    cell3.innerHTML = end;
+                    let cell4 = row.insertCell(4);
+                    cell4.innerHTML = (data.activated==1)?'Y':'N' ;
+                }
+                
+            }
+            function removeRows(table_id) {
+                let table = document.getElementById(table_id);
+                if(table.rows.length > 1){
+                    for (let i = table.rows.length; i > 1; i--) {
+                        table.deleteRow(1);
+                    }
+                }   
+            }
+            function settableZero(table_id){
+                removeRows(table_id);
+                let table = document.getElementById(table_id);                
+                let row = table.insertRow(table.rows.length);
+                let cell0 = row.insertCell(0);
+                cell0.colSpan = "5";
+                cell0.innerHTML = "no data..";
+                cell0.style.textAlign = "center";
+            }
+            function addSharing(){
+                $( "#add-form" ).dialog( "open" );
+            }
+        </script>
+        <style>
+            .ui-widget-overlay.custom-overlay{
+                background-color: black;
+                background-image: none;
+                opacity: 0.5;
+                z-index: 1040;    
+            }
+            .a1{border:1px solid #111}
+            .readOnly{
+                border:1px solid gray;
+                padding:5px 15px 5px 20px;
+            }
+            .tb { 
+                border-collapse: collapse; 
+            }
+            .tb th, .tb td { padding: 5px; border: solid 1px #777; text-align: center;}
+            .tb th { background-color: lightblue; }
+        </style>
+    </head>
+    <body>
+        <%- include('../navigator/navigator') %>
+        <h1><%= title %></h1>
+        <div class="row">
+            AMC List.
+        </div>
+        <div class="row">
+            <table id="amc-list" class="display" style="width:95%">
+                <thead>
+                    <tr>
+                        <th>AMC</th>
+                        <th>Fund Code</th>
+                        <th>Fund Name</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="dialog-form" title="AMC Detail" class="row">
+            <p class="validateTips" id="fund_name"></p>
+            <label for="fundCode">Default Sharing :</label>
+            <label id="default_sharing" class="readOnly">100</label>
+            <div style="margin-top: 2em;">
+                <label>sharing log..</label>
+            </div>
+            <table class="tb col-12" id="amc_sharing">
+                <tr>
+                    <th>no.</th>
+                    <th>sharing</th>
+                    <th>start</th>
+                    <th>end</th>
+                    <th>activated</th>
+                </tr>
+                <tr>
+                    <td colspan="5" style="text-align: center;"> no data..</td>
+                </tr>
+            </table>
+            <br/>
+            <hr/>
+            <div class="row"><button onclick="addSharing();">Add</button></div>
+            <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+            <br>
+          </div>
+          <div id="add-form" title="new Sharing" class="row">
+            <div class="row">
+                <div class="row" style="margin-top: 1em;">
+                    <label>Start date:</label>
+                    <input type="date" id="st_date" name="st_date"/>
+                </div>
+                <div class="row" style="margin-top: 1em;">
+                    <label>End date:</label>
+                    <input type="date" id="ed_date" name="ed_date"/>
+                </div>
+                <div class="row" style="margin-top: 1em;">
+                    <label>Sharing Rate:</label>
+                    <input type="number" name="sharingRate" id="sharingRate" value="75" size="2" min="0" max="100" step="1" style="width: 3em;text-align: right;"/>
+                    <label>%</label>
+                </div>
+                <script>
+                    function validate(){
+                        const URL = HOME_URL+'/amc/addSharing';
+
+                        let st_date = document.getElementById('st_date').value;
+                        let ed_date = document.getElementById('ed_date').value;
+                        let sharing = document.getElementById('sharingRate').value;
+
+                        if(st_date === '' || ed_date === ''){
+                            alert('กรุณาระบุ วันที่ลงในระบบ');
+                            return false;
+                        }else{
+
+                            fetch(URL, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    'startDate': st_date,
+                                    'endDate':ed_date,
+                                    'sharing':sharing,
+                                    'amc_id':amc_id,
+                                    'amc_name':amc_name,
+                                    'fund_code':fund_code
+                                })
+                            }).then(response => response.json())
+                            .then(function(data){
+                                console.log(data);
+                                $("#add-form").dialog("close");
+                                return true;
+                            }).catch(function(error){
+                                console.error(error);
+                                return false;
+                            })
+                        }
+                    }
+                </script>
+            </div>
+          </div>
+    </body>
+</html>

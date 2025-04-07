@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%=title%></title>
+    <link rel='stylesheet' href='../../css/mycss.css' />
+  </head>
+  <body>
+    <%- include('./navigator/navigator') %>
+    <h1>Updated Selling fee</h1>
+    <p>
+        <form action="/amc/uploadXLS" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" />
+            <input type="submit" value="Upload" />
+        </form>
+    </p>
+  </body>
+</html>

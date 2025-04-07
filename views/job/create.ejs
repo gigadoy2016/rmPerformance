@@ -1,0 +1,219 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <link rel='stylesheet' href='../../css/mycss.css' />
+        <link rel="stylesheet" href="../../css/bootstrap.min.css">
+        <link rel='stylesheet' href='../../css/ion.rangeSlider.min.css' />
+        <script src="../../js/jquery.js"></script>
+        <script src="../../js/jquery-ui/jquery-ui.js"></script>
+        <link rel="stylesheet" href="../../js/jquery-ui/jquery-ui.css">
+        <link rel="stylesheet" href="../../css/dataTables.css">
+		<!-- flatpickr CSS -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+		<!-- flatpickr JavaScript -->
+		<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+        <!-- Custom Theme Style -->
+        <link href="../../css/custom.min.css" rel="stylesheet">
+		<script>
+			const DATAs= {
+				'ic_code':'<%=ic_code%>'
+				,'name_eng':'<%=name_eng%>'
+				,'lastname_eng':'<%=lastname_eng%>'
+            	,'name_th':'<%=name_th%>'
+            	,'lastname_th':'<%=lastname_th%>'
+            	,'email':'<%=email%>'
+            	,'approver_id':'<%=approver_id%>'
+            	,'ipAPI':'<%=ipAPI%>'
+				,'data':'<%=data%>'
+				,'customer_type':'<%=customer_type%>'
+				,'job_id':'<%=job_id%>'
+				,'header':'<%=header%>'
+			}
+			var data;
+			function init(){
+				if(DATAs.data !== ''){
+					data = DATAs.data.replaceAll('&#34;','"');
+					data = data.replaceAll('\r\n','\\n');
+					// console.log(data);
+					data = JSON.parse(data);
+					
+					document.getElementById("customer_name").value = data.customer_name;
+					document.getElementById("customer_id").value = data.customer_id;
+					document.getElementById("message").value = data.text;
+					document.getElementById("target").value = data.target;
+					document.getElementById("workDate").value = convertDate(data.target_time);
+					document.getElementById("workDate2").value = convertDate(data.target_time2);
+					if(data.customer_type ==='n'){
+						document.getElementById("optionsRadios1").checked = true;
+					}else{
+						document.getElementById("optionsRadios2").checked = true;
+					}
+					document.getElementById("customerForm").action ="/job/edit";
+					document.getElementById("topic").innerHTML =DATAs.header;
+					// console.log(data);
+					document.getElementById("create_date").value =data.created;
+				}
+			}
+			function convertDate(inputDate){
+				const parts = inputDate.split('/');
+				const formattedDate = parts[2] + '-' + parts[1] + '-' + parts[0];
+				return formattedDate;
+			}
+		</script>
+    </head>
+    <body class="nav-md" onload="init();">
+        <div class="container body">
+            <div class="main_container">
+                <div class="right_col" role="main">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12 ">
+                            <div class="x_panel">
+                                <div class="x_title">
+                                    <h2 id="topic">Create New Job.</h2>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <div class="x_content">
+                                    <br />
+                                    <form data-parsley-validate class="form-horizontal form-label-left" id="customerForm" method="POST" action="./">
+
+										<div class="item form-group">
+											<label class="col-form-label col-md-3 col-sm-3 label-align" for="first-name">RM Name</label>
+											<div class="col-md-6 col-sm-6 ">
+                                                <label class="col-form-label col-md-12 col-sm-12"><%=name_th%> <%=lastname_th%> (<%=ic_code%>)</label>
+												<input type="hidden" name="ic_code" value="<%=ic_code%>" id="ic_code">
+												<input type="hidden" name="email" value="<%=email%>" id="email">
+												<input type="hidden" name="approval_id" value="<%=approver_id%>" id="approval_id">
+												<input type="hidden" name="job_id" value="<%=job_id%>" id="job_id">
+												<input type="hidden" name="create_date" value="" id="create_date">
+											</div>
+										</div>
+                                        <div class="item form-group">
+                                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="last-name"></label>
+                                            <div class="col-md-6 col-sm-6 ">
+                                                <div class="radio">
+													<label>
+														<input type="radio" checked="" value="n" id="optionsRadios1" name="customerType">&nbsp;ลูกค้าใหม่ 
+													</label>
+                                                    &nbsp;&nbsp;
+                                                    <label>
+														<input type="radio" value="o" id="optionsRadios2" name="customerType">&nbsp;ลูกค้าเก่า 
+													</label>
+												</div>
+                                            </div>
+                                        </div>
+										<div class="item form-group">
+											<label class="col-form-label col-md-3 col-sm-3 label-align" for="last-name">ชื่อลูกค้า<span class="required">*</span>
+											</label>
+											<div class="col-md-6 col-sm-6 ">
+												<input type="text" id="customer_name" name="customer_name" required="required" class="form-control" value="">
+												<input type="hidden" id="customer_id" name="customer_id" required="required" class="form-control" value="">
+											</div>
+										</div>
+										<!-- <div class="item form-group">
+											<label class="col-form-label col-md-3 col-sm-3 label-align" for="last-name">หมายเลขบัตรประชาชน<span class="required">*</span>
+											</label>
+											<div class="col-md-6 col-sm-6 ">
+												<input type="text" id="customer_id" name="customer_id" required="required" class="form-control" value="">
+											</div>
+										</div> -->
+										<div class="item form-group">
+											<label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">วัตถุประสงค์</label>
+											<div class="col-md-6 col-sm-6 ">
+												<textarea id="message" required="required" class="form-control" name="message" data-parsley-trigger="keyup" data-parsley-minlength="20" data-parsley-maxlength="100" data-parsley-minlength-message="Come on! You need to enter at least a 20 caracters long comment.." data-parsley-validation-threshold="10"></textarea>
+											</div>
+										</div>
+										<div class="item form-group">
+											<label class="col-form-label col-md-3 col-sm-3 label-align">จำนวนเงินลงทุน</label>
+											<div class="col-md-6 col-sm-6 ">
+												<script>
+													function numberFormat(input){
+														if(input.value ===""){
+															input.value = 0
+														}else{
+															let n = input.value;
+															n = n.replaceAll(",","");
+															let txt = parseInt(n).toLocaleString('en-US');
+															input.value = txt
+														}
+													}
+												</script>
+												<input type="text" id="target" name="target" required="required" class="form-control" onkeyup="numberFormat(this)">
+											</div>
+										</div>
+										<div class="item form-group">
+											<label class="col-form-label col-md-3 col-sm-3 label-align">วันที่เข้าพบ <span class="required">*</span>
+											</label>
+											<div class="col-md-6 col-sm-6 ">
+												<!-- <input id="workDate" name="workDate" class="date-picker form-control" placeholder="yyyy-mm-dd" type="text" required="required" type="text" onfocus="this.type='date'" onclick="this.type='date'" onblur="this.type='text'" onmouseout="timeFunctionLong(this)"> -->
+												<input id="workDate" name="workDate" class="date-picker form-control" placeholder="yyyy-mm-dd" type="text" required="required">
+											</div>
+										</div>
+										<div class="item form-group">
+											<label class="col-form-label col-md-3 col-sm-3 label-align">วันที่เข้าพบ <span class="required">*</span>
+											</label>
+											<div class="col-md-6 col-sm-6 ">
+												<!-- <input id="workDate2" name="workDate2" class="date-picker form-control" placeholder="yyyy-mm-dd" type="text" required="required" type="text" onfocus="this.type='date'" onclick="this.type='date'" onblur="this.type='text'" onmouseout="timeFunctionLong(this)"> -->
+												<input id="workDate2" name="workDate2" class="date-picker form-control" placeholder="yyyy-mm-dd" type="text" required="required">
+											</div>
+										</div>
+										<div class="ln_solid"></div>
+										<div class="item form-group">
+											<div class="col-md-6 col-sm-6 offset-md-3">
+												<button type="submit" class="btn btn-success">Submit</button>
+												<button class="btn btn-primary" type="reset" onclick="init();">Reset</button>
+												<!-- <a href="#" onclick="verify()">test</a> -->
+											</div>
+										</div>
+										<script>
+											// function timeFunctionLong(input) {
+											// 	setTimeout(function() {
+											// 		input.type = 'text';
+											// 	}, 60000);
+											// }
+												// กำหนด flatpickr ให้กับ input field ด้วย id "workDate"
+												flatpickr("#workDate", {
+													dateFormat: "Y-m-d", // รูปแบบวันที่ที่ต้องการ (YYYY-MM-DD)
+												});
+												flatpickr("#workDate2", {
+													dateFormat: "Y-m-d", // รูปแบบวันที่ที่ต้องการ (YYYY-MM-DD)
+												});
+
+												function verify(){
+													let dateA = document.getElementById('workDate').value;
+													let dateB = document.getElementById('workDate2').value;
+													let date1 = convertDateFormat(dateA);
+													console.log(date1);
+													alert(date1);
+													
+													document.getElementById('workDate').value = date1;
+													alert(document.getElementById('workDate').value);
+												}
+												function convertDateFormat(dateString) {
+													// ตรวจสอบว่า dateString มีรูปแบบเป็น DD/MM/YYYY หรือไม่
+													var match = dateString.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+													if (match) {
+														// ถ้ามีรูปแบบเป็น DD/MM/YYYY ให้แปลงเป็น YYYY-MM-DD
+														var day = match[1];
+														var month = match[2];
+														var year = match[3];
+														return year + '-' + month + '-' + day;
+													} else {
+														// ถ้าไม่ใช่ให้คืนค่าเดิมกลับไป
+														return dateString;
+													}
+												}
+										</script>
+									</form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
