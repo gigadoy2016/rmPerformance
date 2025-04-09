@@ -1,16 +1,18 @@
+require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
-const {  connection,HOSTIP } = require('../config/dbConfig');
+const {  connection } = require('../config/dbConfig');
 const saltRounds = bcrypt.genSaltSync(10);
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json());
-
+const HOSTIP = process.env.SERVER_IP+":"+process.env.SERVER_PORT;
 
 // Users router path: "/". 
 router.get('/', function(req, res, next) {
+    console.log("user.js"+"===>"+HOSTIP);
     res.render('login', { title: 'WCC',"ipAPI":HOSTIP });
 });
 
@@ -49,10 +51,11 @@ router.post('/pass', function(req, res, next) {
 router.post('/email', function(req, res, next) {
   let email = req.body.email;
   console.log("== Query Email ===");
-  const SQL = "SELECT count(*) as ans,password FROM `users` WHERE email = '"+email+"' AND status = 1;";
+  const SQL = "SELECT 1 as ans,password FROM `users` WHERE email = '"+email+"' AND status = 1;";
   // console.log(SQL);
   connection.query(SQL, (err, result) => {
     if(err){
+      console.log(err);
       res.send(err);
     }else{
       console.log(result);

@@ -107,7 +107,7 @@
               console.log(URL);
               try{
                 $.post(URL, {'email': email, 'oldPass': oldPass, 'newPass': newPass}, function(result){
-                  //console.log(result);
+                  console.log(result);
                   document.getElementById('msg1').innerHTML = result.ans;
 
                   $( "#msgError" ).dialog({
@@ -224,9 +224,10 @@
         let email = document.getElementById('email').value;
         let URL = HOME_URL+'/user/email/';
 
-        // console.log(URL);
+        console.log(URL);
         $.post(URL, {'email': email}, function(result){
-          // console.log(result);
+          // console.log("-------");
+          console.log(result);
           if(result.ans ==1){
             displayTrue('imgEmailValidated');
           }else{

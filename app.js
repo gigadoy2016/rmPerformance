@@ -1,8 +1,11 @@
+require('dotenv').config();
 var express = require('express');
 var app = express();
 const path = require('path') // เรียกใช้งาน path module
-const PORT = 3000;
+const PORT = process.env.SERVER_PORT;
+const SERVER_IP = process.env.SERVER_IP;
 const system_id = 1;
+
 
 // ส่วนของการใช้งาน router module ต่างๆ 
 const indexRouter = require('./routes/index');
@@ -65,6 +68,6 @@ app.use('/aum',aumRouter)
 const server = app.listen(PORT,function(){
   const HOST = server.address().address;
   const port = server.address().port;
-  console.log("Listening at http://%s:%s",HOST,port);
+  console.log("Listening at http://%s:%s",SERVER_IP,port);
   console.log("========================start service==========================================");
 });  

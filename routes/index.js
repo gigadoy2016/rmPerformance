@@ -1,12 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cookieSession = require('cookie-session');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const { connection,HOSTIP } = require('../config/dbConfig');
+const { connection } = require('../config/dbConfig');
 const { txtLog } = require('../config/log');
 const bcrypt = require('bcrypt');
 const router = express.Router();
+const HOSTIP = process.env.SERVER_IP+":"+process.env.SERVER_PORT;
  
 // ตั้งค่า session
 router.use(session({
