@@ -231,7 +231,7 @@ async function getRM_All(){
 }
 
 async function getTrailingFeeByID(id){
-    const SQL = `SELECT employee_id, month, rmTrailingFee, wccTrailingFee, updater
+    const SQL = `SELECT employee_id, rmTrailingFee, wccTrailingFee, updater
             ,DATE_FORMAT(updated, '%d/%m/%Y %H:%i:%s') updated 
         FROM trailingFee WHERE employee_id ='`+id+`'`;
     let data;
@@ -245,7 +245,7 @@ async function getTrailingFeeByID(id){
 }
 async function getTargetByID(id){
     const SQL = `SELECT ic_code,month, target, DATE_FORMAT(month_active, '%d/%m/%Y') month_active  
-        FROM user_performance WHERE ic_code ='`+id+`'`;
+        FROM user_target WHERE ic_code ='`+id+`'`;
     let data;
     try{
         debugLog(SQL);

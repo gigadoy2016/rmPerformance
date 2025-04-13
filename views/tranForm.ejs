@@ -138,7 +138,7 @@
           $( document ).tooltip();
 
           document.getElementById("wcc-box").style.display = "none";
-          if(permission > 3){
+          if(permission > 13){
             document.getElementById("wcc-box").style.display = "inline";
           }
           
@@ -511,9 +511,7 @@
           try{
             const response = await fetch(`../../aum/ic/${ic}/${date}`);
             const json = await response.json();
-            // console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-            // console.log(json);
-            // console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
             if(json.data !== undefined){
               totalAvailableBalanceAmount =0;
               if(json.data[0] !== undefined){
@@ -815,7 +813,7 @@
             <span id="past2date" style="border: 0px solid gray;width: 100em;height:auto;color:red">T-2 </span>
           </div>
         </label>
-        <label class="col-12 col-sm-12 col-md-6 col-xl-2" id="wcc-box">
+        <label class="col-12 col-sm-12 col-md-6 col-xl-2" id="wcc-box" >
           <table class="box1 col-12">
             <tr><td style="text-align: center;background-color: #e4ca09;" colspan="3">WCC Revenue</td></tr>
             <tr><td class="co" colspan="2">Front end fee:</td><td id="caption_feeSummary" class="userPerfoemance"></td></tr>
@@ -826,7 +824,7 @@
             <tr><td class="co" colspan="2">Net Sharing</td><td class="userPerfoemance" id="caption_gp"></td></tr>
           </table>
         </label>
-        <label class="col-12 col-sm-12 col-md-6 col-xl-2">
+        <label class="col-12 col-sm-12 col-md-6 col-xl-2" style="display: none;">
           <table class="box1 col-12" >
             <tr><td class="co">&nbsp;</td><td class="userPerfoemance"></td><td></td></tr>
             <tr><td class="co"> AUM:</td><td colspan="2" class="userPerfoemance" id="aum_val"></td></tr>

@@ -225,8 +225,12 @@ router.post('/select', urlencodedParser,async function (req, res) {
         updater:trailing_fee.updater
       };
     }
-
-    data.user.salary = salary;
+    console.log("salary======================================");
+    console.log(salary);
+    if(salary != null){
+      if(salary.length>0)
+        data.user.salary = salary;
+    }
     if(incentive != null){      
       data.user.incentive = incentive;
     }
@@ -332,7 +336,7 @@ async function getEmployeeByID(ic_code){
 }
 async function getTrailingFee(ic_code,month,year){
   const month_active = year+'-'+month+'-01';
-  const SQL = `SELECT employee_id, rmTrailingFee, wccTrailingFee, month, updated, updater 
+  const SQL = `SELECT employee_id, rmTrailingFee, wccTrailingFee, updated, updater 
       FROM trailingFee 
       WHERE employee_id = '${ic_code}'  
       AND month_active BETWEEN '${month_active}' AND LAST_DAY('${month_active}') ORDER BY id DESC`;
@@ -360,7 +364,7 @@ async function getTrailingFeeTeam(team_id,team,month_active){
   let member = "'"+team_id+"','" + t+"'";
 
   const SQL = `SELECT id, employee_id, rmTrailingFee, wccTrailingFee
-      , month, updated, month_active 
+      , updated, month_active 
     FROM trailingFee WHERE month_active='${month_active}' 
     AND employee_id IN (${member}) 
     ORDER BY id DESC;`;
@@ -430,7 +434,7 @@ router.get('/monthly/:year/:month', (req, res, next) => {
         }
 
         //====================================Get Target==============================//
-        const sqlPerfromance = "SELECT * FROM user_performance up where month_active <= '"+d+"' and ic_code = '"+user.ic_code+"' ORDER BY id DESC;";
+        const sqlPerfromance = "SELECT * FROM user_target up where month_active <= '"+d+"' and ic_code = '"+user.ic_code+"' ORDER BY id DESC;";
         // console.log(sqlPerfromance);
         try{
           const datas = await dbConnection.query(sqlPerfromance);
@@ -442,7 +446,7 @@ router.get('/monthly/:year/:month', (req, res, next) => {
       }
 
       //====================================Get AMC Sharing==============================//
-      const sqlAMC_Sharing = `select * from amc_sharing amc 
+      const sqlAMC_Sharing = `select * from fund_sharing amc 
       WHERE amc.activated =1 AND amc.promotion_start_date <= '${d}' 
       AND (amc.promotion_end_date IS NULL OR amc.promotion_end_date >= LAST_DAY('${d}'))`;
       let AMC = [];
@@ -706,7 +710,7 @@ async function getTargetByTeam(teamName,team,date){
   
   const SQL =`SELECT 
     id, ic_code, target, create_date, last_update, activated, month_active, month 
-    FROM user_performance WHERE ic_code IN (${member}) AND month_active <= '${date}'
+    FROM user_target WHERE ic_code IN (${member}) AND month_active <= '${date}'
     ORDER BY id DESC  `;
   let data;
   try{
@@ -726,7 +730,7 @@ async function getTargets(teamName,team,date){
   
   const SQL =`SELECT 
     id, ic_code, target, create_date, last_update, activated, month_active, month 
-    FROM user_performance WHERE ic_code IN (${member}) AND month_active <= '${date}'
+    FROM user_target WHERE ic_code IN (${member}) AND month_active <= '${date}'
     ORDER BY id DESC  `;
   let data;
   try{
@@ -801,8 +805,8 @@ async function getTargets(st,ed,ic_code){
   
   let SQL =`
   SELECT DISTINCT id,ic_code ,month_active, target
-    FROM user_performance 
-    WHERE (month_active BETWEEN '${st}' AND '${ed}') 
+    FROM user_target  
+    WHERE (month_active BETWEEN '${st}' AND '${ed}')
     AND ic_code='${ic_code}' 
     Order by month_active DESC`;
 

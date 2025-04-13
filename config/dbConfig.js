@@ -16,30 +16,30 @@ const connection = mysql.createPool({
     database : DB_DATABASE
 });
 const conn = mysql.createConnection({
+    host     : DB_HOST,
+    user     : DB_USER,
+    password : DB_PASSWORD,
+    database : DB_DATABASE
+});
+const dbConnection = mysql.createConnection({
+    host     : DB_HOST,
+    user     : DB_USER,
+    password : DB_PASSWORD,
+    database : DB_DATABASE,
+    timezone: 'Z'
+}).promise();
+const dbConnJob = mysql.createConnection({
     host     : 'localhost',
     user     : 'root',
     password : '9161133',
-    database : 'wcc'
-});
-const dbConnection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : '9161133',
-  database : 'wcc',
-  timezone: 'Z'
-}).promise();
-const dbConnJob = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : '9161133',
-  database : 'wcc_intra'
+    database : 'wcc_intra'
 }).promise();
 
 const dbConnFCC = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : '9161133',
-  database : 'wcc_fundconnext'
+    host     : 'localhost',
+    user     : 'root',
+    password : '9161133',
+    database : 'wcc_fundconnext'
 }).promise();
 
 

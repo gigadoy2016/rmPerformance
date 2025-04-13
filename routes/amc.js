@@ -77,10 +77,10 @@ router.post('/addSharing',async function(req, res, next) {
   }
 
 
-  let SQL_add = 'INSERT INTO `amc_sharing` (`amc_id`, `sharing`, `create_date`, `last_update`, `month`, `activated`, `year`, `fund_code`, `promotion_start_date`, `promotion_end_date`) ';
-  SQL_add += 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  let SQL_add = 'INSERT INTO `fund_sharing` (`amc_id`, `sharing`, `create_date`, `last_update`, `activated`, `fund_code`, `start_date`, `end_date`) ';
+  SQL_add += 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
   console.log(SQL_add);
-  let data = [amc_id, sharing, date, time, month,'1',year, amc_name, startDate, endDate];
+  let data = [amc_id, sharing, date, time, '1',amc_name, startDate, endDate];
   // console.log(data);
   connection.query(SQL_add, data,(err, result) => {
     if(err){
@@ -119,7 +119,7 @@ router.get('/list',async function (req, res) {
 router.get('/sharing/:id',async function(req, res, next) {
   D.debugLog("== amc.js /sharing == Line 82");
   let id = req.params.id;
-  let SQL = "SELECT * FROM amc_sharing WHERE amc_id='"+id+"' ORDER BY promotion_start_date DESC;"
+  let SQL = "SELECT * FROM fund_sharing WHERE amc_id='"+id+"' ORDER BY start_date DESC;"
   console.log(SQL);
   let data = [];
   try{
@@ -139,14 +139,10 @@ router.get('/sharing/month/:m/:y',async function(req, res, next) {
   let m = req.params.m;
   let y = req.params.y;
   let date = y+'-'+m+'-01';
-  // let SQL2 = "SELECT ac.amc_id,ac.amc_name ,ac.fund_code,as2.sharing ,as2.promotion_start_date,as2.promotion_end_date,as2.activated FROM asset_companys ac LEFT JOIN amc_sharing as2 ON ac.amc_id = as2.amc_id ";
-  // SQL += " WHERE (('"+date+"' BETWEEN as2.promotion_start_date AND as2.promotion_end_date ) OR as2.promotion_end_date is NULL) ";
-	// SQL += " AND as2.promotion_start_date is not NULL AND as2.activated =1 ";
-  // SQL += " ORDER BY fund_code,promotion_start_date  DESC";
-
+  
   let SQL = `SELECT ac.amc_id, ac.amc_name, ac.fund_code, as2.sharing, as2.promotion_start_date, 
   as2.promotion_end_date, as2.activated 
-FROM asset_companys AS ac LEFT JOIN amc_sharing AS as2 ON ac.amc_id = as2.amc_id  
+FROM asset_companys AS ac LEFT JOIN fund_sharing AS as2 ON ac.amc_id = as2.amc_id  
 WHERE 
   '${date}' BETWEEN as2.promotion_start_date AND COALESCE(as2.promotion_end_date, '${date}')
   AND as2.promotion_start_date IS NOT NULL 
@@ -167,7 +163,7 @@ router.get('/sharing2/month/:m/:y',async function(req, res, next) {
   D.debugLog("== amc.js /sharing2 ==");
   let m = req.params.m;
   let y = req.params.y;
-  let SQL = "SELECT * FROM amc_sharing WHERE `month`='"+m+"' AND `year`='"+y+"';"
+  let SQL = "SELECT * FROM fund_sharing WHERE `month`='"+m+"' AND `year`='"+y+"';"
   let data = [];
   try{
     console.log(SQL);
@@ -183,8 +179,8 @@ router.get('/target/month/:m/:ic',async function(req, res, next) {
   D.debugLog("== amc.js /target ==");
   let m = req.params.m;
   let ic = req.params.ic;
-  // let SQL = "SELECT * FROM user_performance WHERE ic_code='"+ic+"' AND `month` <='"+m+"' order by `month` DESC;"
-  let SQL = "SELECT * FROM user_performance WHERE ic_code='"+ic+"' AND `month_active` <=STR_TO_DATE('"+m+"-01','%Y-%m-%d') order by `month_active` DESC;"
+  // let SQL = "SELECT * FROM user_target WHERE ic_code='"+ic+"' AND `month` <='"+m+"' order by `month` DESC;"
+  let SQL = "SELECT * FROM user_target WHERE ic_code='"+ic+"' AND `month_active` <=STR_TO_DATE('"+m+"-01','%Y-%m-%d') order by `month_active` DESC;"
   let data = [];
   D.debugLog(SQL);
   try{
@@ -226,7 +222,7 @@ router.post('/fundcode',async function (req, res) {
       ac.amc_id, ac.amc_name, ac.fund_code, as2.sharing, as2.promotion_start_date, 
       as2.promotion_end_date, as2.activated 
     FROM 
-      asset_companys AS ac LEFT JOIN amc_sharing AS as2 ON ac.amc_id = as2.amc_id 
+      asset_companys AS ac LEFT JOIN fund_sharing AS as2 ON ac.amc_id = as2.amc_id 
     WHERE as2.fund_code IN (${fundcode}) AND 
       '${date}' BETWEEN as2.promotion_start_date AND COALESCE(as2.promotion_end_date, '${date}')
       AND as2.promotion_start_date IS NOT NULL 
