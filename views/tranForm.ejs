@@ -507,25 +507,25 @@
 
         async function getAUM_byIC(ic,date){
           console.log("----Get AUM----"+date);
-          let d = "";
-          try{
-            const response = await fetch(`../../aum/ic/${ic}/${date}`);
-            const json = await response.json();
+          // let d = "";
+          // try{
+          //   const response = await fetch(`../../aum/ic/${ic}/${date}`);
+          //   const json = await response.json();
 
-            if(json.data !== undefined){
-              totalAvailableBalanceAmount =0;
-              if(json.data[0] !== undefined){
-                totalAvailableBalanceAmount = parseFloat(json.data[0].TotalOutstandingBalanceAmount);
-                d ="("+getFormatDate(json.data[0].createDate)+")";
-              }
-            }
-            let aumDisplay = '<label style="color:gray">'+d+'</label> '+ Math.floor(totalAvailableBalanceAmount).toLocaleString('en-US');
-            $('#aum_val').html(aumDisplay);
-            console.log("----Get AUM Success----"+totalAvailableBalanceAmount);
-          }catch (err){
-            console.error('Error fetching data:', err);
-          }
-          
+          //   if(json.data !== undefined){
+          //     totalAvailableBalanceAmount =0;
+          //     if(json.data[0] !== undefined){
+          //       totalAvailableBalanceAmount = parseFloat(json.data[0].TotalOutstandingBalanceAmount);
+          //       d ="("+getFormatDate(json.data[0].createDate)+")";
+          //     }
+          //   }
+          //   let aumDisplay = '<label style="color:gray">'+d+'</label> '+ Math.floor(totalAvailableBalanceAmount).toLocaleString('en-US');
+          //   $('#aum_val').html(aumDisplay);
+          //   console.log("----Get AUM Success----"+totalAvailableBalanceAmount);
+          // }catch (err){
+          //   console.error('Error fetching data:', err);
+          // }
+          $('#aum_val').html(0);
         }
 
         function groupBy(array, key){
@@ -596,7 +596,7 @@
               objUser.setPromotion(payPromotion);
             }
             let obj1 = objUser.gen();
-            console.log("666 target user 6666666666666666666666666666666666666666666666666");
+
             console.log(obj1);
             tableNew = new TransactionTable('pivotTable2',json);
             tableNew.setPermission(permission);

@@ -146,7 +146,11 @@ class User{
             let fee = this.string2Number(transaction.fee);
             let type = transaction.transaction_type;
             let sharing = this.sharingDefault;
-            let _sharing = this.fundSharing.find(f => f.fund_code === transaction.fund_code);
+            let _sharing;
+            if(this.fundSharing){
+                _sharing = this.fundSharing.find(f => f.fund_code === transaction.fund_code);    
+            }
+            // let _sharing = this.fundSharing.find(f => f.fund_code === transaction.fund_code);
             let status = transaction.status;
             let amc_name = transaction.amc_code;
 

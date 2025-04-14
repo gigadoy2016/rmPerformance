@@ -108,7 +108,11 @@ var User = /** @class */ (function () {
             var fee = this_1.string2Number(transaction.fee);
             var type = transaction.transaction_type;
             var sharing = this_1.sharingDefault;
-            var _sharing = this_1.fundSharing.find(function (f) { return f.fund_code === transaction.fund_code; });
+            var _sharing = void 0;
+            if (this_1.fundSharing) {
+                _sharing = this_1.fundSharing.find(function (f) { return f.fund_code === transaction.fund_code; });
+            }
+            // let _sharing = this.fundSharing.find(f => f.fund_code === transaction.fund_code);
             var status_1 = transaction.status;
             var amc_name = transaction.amc_code;
             if (_sharing !== undefined) {
