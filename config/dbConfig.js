@@ -28,27 +28,27 @@ const dbConnection = mysql.createConnection({
     database : DB_DATABASE,
     timezone: 'Z'
 }).promise();
-const dbConnJob = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : '9161133',
-    database : 'wcc_intra'
-}).promise();
+// const dbConnJob = mysql.createConnection({
+//     host     : 'localhost',
+//     user     : 'root',
+//     password : '9161133',
+//     database : 'wcc_intra'
+// }).promise();
 
-const dbConnFCC = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : '9161133',
-    database : 'wcc_fundconnext'
-}).promise();
+// const dbConnFCC = mysql.createConnection({
+//     host     : 'localhost',
+//     user     : 'root',
+//     password : '9161133',
+//     database : 'wcc_fundconnext'
+// }).promise();
 
 
-const mailLogin = {
-  service: 'gmail',
-  auth: {
-    user: 'wealthconcept.th@gmail.com',
-    pass: 'tphl ambg pqmn uiwe'
-  }
-};
+// const mailLogin = {
+//   service: 'gmail',
+//   auth: {
+//     user: 'wealthconcept.th@gmail.com',
+//     pass: 'tphl ambg pqmn uiwe'
+//   }
+// };
 
 module.exports = { connection,conn,dbConnection,dbConnJob,dbConnFCC,HOSTIP,mailLogin }
