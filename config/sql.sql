@@ -5,7 +5,7 @@ pm2 stop 0
 pm2 restart 0
 pm2 list
 
-CREATE TABLE amc_sharing (
+CREATE TABLE fund_sharing (
   id INT NOT NULL AUTO_INCREMENT,
   amc_id CHAR(10),
   sharing DECIMAL(10,4),

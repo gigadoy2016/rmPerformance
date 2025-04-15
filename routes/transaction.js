@@ -803,12 +803,18 @@ router.get('/targetTeam/:date/:member', urlencodedParser,async function (req, re
 async function getTargets(st,ed,ic_code){
   txtLog("transaction.js","getTargets(st,ed,ic_code)");
   
+  // let SQL =`
+  // SELECT DISTINCT id,ic_code ,month_active, target
+  //   FROM user_target  
+  //   WHERE (month_active BETWEEN '${st}' AND '${ed}')
+  //   AND ic_code='${ic_code}' 
+  //   Order by month_active DESC`;
   let SQL =`
-  SELECT DISTINCT id,ic_code ,month_active, target
-    FROM user_target  
-    WHERE (month_active BETWEEN '${st}' AND '${ed}')
-    AND ic_code='${ic_code}' 
-    Order by month_active DESC`;
+    SELECT DISTINCT id,ic_code ,month_active, target
+      FROM user_target  
+      WHERE (month_active <= '${st}' )
+      AND ic_code='${ic_code}' 
+      Order by month_active DESC`;
 
   try{
       debugLog(SQL);

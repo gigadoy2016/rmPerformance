@@ -364,10 +364,12 @@ var TransactionTable = /** @class */ (function () {
         // ======================== RM Box ==========================================
         var sumTarget = 0;
         var targetDetail = '';
-        for (var i = 0; i < targets.length; i++) {
-            var t = targets[i];
-            sumTarget += parseInt(t.target);
-            targetDetail += t.target + ",";
+        if (targets.length > 0) {
+            for (var i = 0; i < 1; i++) {
+                var t = targets[i];
+                sumTarget += parseInt(t.target);
+                targetDetail += t.target + ",";
+            }
         }
         var icCodeElement = document.getElementById('ic_code');
         if (icCodeElement) {
@@ -376,7 +378,8 @@ var TransactionTable = /** @class */ (function () {
         ;
         var targetElement = document.getElementById('target');
         if (targetElement) {
-            targetElement.innerHTML = "<a href=\"#\" title=\"[".concat(targetDetail, "]\">").concat(this.getCurrency(sumTarget), "</a>");
+            if (targetDetail !== "")
+                targetElement.innerHTML = "<a href=\"#\" title=\"[".concat(targetDetail, "]\">").concat(this.getCurrency(sumTarget), "</a>");
         }
         var fontEndFeeElement = document.getElementById('fontEndFee');
         if (fontEndFeeElement) {

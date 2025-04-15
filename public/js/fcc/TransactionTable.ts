@@ -351,17 +351,23 @@ class TransactionTable{
         // ======================== RM Box ==========================================
         let sumTarget = 0;
         let targetDetail = '';
-        for(let i=0; i < targets.length; i++){
-            const t = targets[i];
-            sumTarget += parseInt(t.target);
-            targetDetail += t.target +","
+        if(targets.length >0){
+            for(let i=0; i < 1; i++){
+                const t = targets[i];
+                sumTarget += parseInt(t.target);
+                targetDetail += t.target +","
+            }
         }
+        
         
         const icCodeElement = document.getElementById('ic_code');
         if (icCodeElement) {icCodeElement.innerHTML = this.DATAs.profile.ic_code};
 
         const targetElement = document.getElementById('target');
-        if (targetElement) {targetElement.innerHTML = `<a href="#" title="[${targetDetail}]">${this.getCurrency(sumTarget)}</a>`}
+        if (targetElement) {
+            if(targetDetail !== "")
+                targetElement.innerHTML = `<a href="#" title="[${targetDetail}]">${this.getCurrency(sumTarget)}</a>`
+        }
 
         const fontEndFeeElement = document.getElementById('fontEndFee');
         if (fontEndFeeElement) {
