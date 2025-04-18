@@ -31,6 +31,7 @@ class User{
     private netRevenue:number;
     private netShareing:number;
     private performance:number = 0;
+    private rateWithHolding:number = 0;
 
     private detail:any;
 
@@ -219,7 +220,7 @@ class User{
                     if (type === 'SUB') {
                         fund.subAmount +=Math.floor(this.string2Number(transaction.confirmed_amount));
                         fund.subFee += Math.floor(this.string2Number(transaction.fee));
-                        fund.subWH = fund.subFee * 0.03;
+                        fund.subWH = fund.subFee * this.rateWithHolding;
                         fund.subNetFee = fund.subFee - fund.subWH;
 
                         let fee = this.calculationSharing(transaction,fund.subNetFee,sharing,fund.incentive);
@@ -240,7 +241,7 @@ class User{
                     } else if (type === 'SWI') {
                         fund.swiAmount += Math.floor(this.string2Number(transaction.confirmed_amount));
                         fund.swiFee += Math.floor(this.string2Number(transaction.fee));
-                        fund.swiWH = fund.swiFee * 0.03;
+                        fund.swiWH = fund.swiFee * this.rateWithHolding;
                         fund.swiNetFee = fund.swiFee - fund.swiWH;
 
                         let fee = this.calculationSharing(transaction,fund.swiNetFee,sharing,fund.incentive);

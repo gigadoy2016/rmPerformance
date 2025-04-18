@@ -1,0 +1,165 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <script src="../../js/lib/xlsx.min.js"></script>
+        <style>
+            table{
+                border-collapse: collapse;
+                width: 100%;             
+            };
+            th,td{
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {background-color: #f2f2f2;}
+        </style>
+
+        <script>
+            var jsonData = [];
+            function upload() {
+                var files = document.getElementById('file_upload').files;
+                if(files.length==0){
+                    alert("Please choose any file...");
+                    return;
+                }
+                var filename = files[0].name;
+                var extension = filename.substring(filename.lastIndexOf(".")).toUpperCase();
+                if (extension == '.XLS' || extension == '.XLSX') {
+                    //Here calling another method to read excel file into json
+                    excelFileToJSON(files[0]);
+                }else{
+                    alert("Please select a valid excel file.");
+                }
+            }
+            //Method to read excel file and convert it into JSON 
+            function excelFileToJSON(file){
+                console.log("-excelFileToJSON --------------------------------");
+                try {
+                    var reader = new FileReader();
+                    reader.readAsBinaryString(file);
+                    reader.onload = function(e) {
+                        var data = e.target.result;
+                        var workbook = XLSX.read(data, {type : 'binary'});
+                        var result = {};
+                        var firstSheetName = workbook.SheetNames[0];
+                        
+                        // console.log(workbook.SheetNames.length);
+                        if(workbook.SheetNames.length > 0){
+                            jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
+                            console.log(jsonData);
+                            displayExcelData(jsonData);
+                        }else{
+                            alert("No Sheet in File Excel!!!");
+                        }                        
+                    }
+                }catch(e){
+                    console.error(e);
+                }
+            }
+            function displayExcelData(data) {
+                let table = "<tr>";
+                excelData = [];
+
+                if (data.length > 0) {
+                    const requiredHeaders = ["no", "IC", "name", "lastname", "Salary","Active"];
+
+                    requiredHeaders.forEach(header => table += `<th>${header}</th>`);
+                    table += "</tr>";
+
+                    for (const row of data) {
+                        table += "<tr>";
+                        let rowData = [];
+                        for (const header of requiredHeaders) {
+                            if (row[header] !== undefined) {
+                                rowData.push(row[header]);
+                            } else {
+                                rowData.push("");
+                            }
+                        }
+                        for (const cell of rowData) {
+                            table += `<td>${cell}</td>`;
+                        }
+                        table += "</tr>";
+                        // excelData.push(row);
+                    }
+                } else {
+                    document.getElementById('display_excel_data').innerHTML = "ไม่มีข้อมูลในไฟล์";
+                    document.getElementById('send_button').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('display_excel_data').innerHTML = table;
+                document.getElementById('send_button').style.display = 'block';
+            }
+
+
+            function sendData() {
+                console.log("sendData() --------------------------------");
+                console.log(jsonData);
+                const createDateValue = document.getElementById("createDate").value;
+                const data2Send = {
+                    "target": jsonData,
+                    "createDate": createDateValue
+                };
+
+                if (jsonData.length === 0) {
+                    alert("No data to send!");
+                    return;
+                }
+                
+                const loadingElement = document.getElementById("loading");
+                loadingElement.style.display = "flex";
+
+                fetch('/target/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data2Send)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Data successfully uploaded!");
+                        document.getElementById('send_button').style.display = 'none';
+                    } else {
+                        alert("Failed to upload data.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while sending data.");
+                })
+                .finally(() => {
+                    loadingElement.style.display = "none";
+                });
+            }
+            function setDefaultDate() {
+                const dateInput = document.getElementById("createDate");
+                const today = new Date();
+                today.setDate(today.getDate() - 1);
+                const tMinusOne = today.toISOString().split('T')[0];
+                dateInput.value = tMinusOne;
+            }
+
+            window.onload = setDefaultDate;
+        </script>
+    </head>
+    <body>
+        <h1>Update Target RM</h1>
+        <p>
+
+            <input type="file" name="file" id="file_upload" accept=".xlsx,.xls,.csv" onchange="upload();" />
+            Update data at 
+            <input type="text" name="createDate" id="createDate" value="" />
+            <div><button onclick="sendData();" style="display: none;" id="send_button">Upload Target</button></div>
+            <br><br>
+            <table id="display_excel_data"></table>
+            <div id="loading">
+                <div></div>
+            </div>
+            <div id="status"></div>
+          </p>
+    </body>
+</html>

@@ -6,6 +6,7 @@ var User = /** @class */ (function () {
         this.sharingDefault = 0.7;
         this.rmPay4Sharing = 0;
         this.performance = 0;
+        this.rateWithHolding = 0;
         this.backEndWccSharing = [
             { AMC: "KTAM", sharing: 1, fundcode: "all", "enable_st": "2025-02-01" },
             { AMC: "EASTSPRING", sharing: 1, fundcode: "all", "enable_st": "2025-02-01" },
@@ -176,7 +177,7 @@ var User = /** @class */ (function () {
                     if (type === 'SUB') {
                         fund.subAmount += Math.floor(this_1.string2Number(transaction.confirmed_amount));
                         fund.subFee += Math.floor(this_1.string2Number(transaction.fee));
-                        fund.subWH = fund.subFee * 0.03;
+                        fund.subWH = fund.subFee * this_1.rateWithHolding;
                         fund.subNetFee = fund.subFee - fund.subWH;
                         var fee_1 = this_1.calculationSharing(transaction, fund.subNetFee, sharing, fund.incentive);
                         fund.wccSubFEF = fee_1.wccResult;
@@ -195,7 +196,7 @@ var User = /** @class */ (function () {
                     else if (type === 'SWI') {
                         fund.swiAmount += Math.floor(this_1.string2Number(transaction.confirmed_amount));
                         fund.swiFee += Math.floor(this_1.string2Number(transaction.fee));
-                        fund.swiWH = fund.swiFee * 0.03;
+                        fund.swiWH = fund.swiFee * this_1.rateWithHolding;
                         fund.swiNetFee = fund.swiFee - fund.swiWH;
                         var fee_2 = this_1.calculationSharing(transaction, fund.swiNetFee, sharing, fund.incentive);
                         fund.wccSwiFEF = fee_2.wccResult;

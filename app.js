@@ -20,6 +20,7 @@ const jobRouter = require('./routes/job');
 const reportRouter = require('./routes/report');
 const announceRouter = require('./routes/announcement');
 const aumRouter = require('./routes/aum');
+const targetRouter = require('./routes/target');
 
 const cookieSession = require('cookie-session');
 const bodyParser = require('body-parser');
@@ -63,7 +64,8 @@ app.use('/job',jobRouter)
 app.use('/test', testRouter);
 app.use('/report', reportRouter);
 app.use('/announcement',announceRouter);
-app.use('/aum',aumRouter)
+app.use('/aum',aumRouter);
+app.use('/target',targetRouter);
 
 const server = app.listen(PORT,function(){
   const HOST = server.address().address;
