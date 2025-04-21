@@ -140,14 +140,14 @@ router.get('/sharing/month/:m/:y',async function(req, res, next) {
   let y = req.params.y;
   let date = y+'-'+m+'-01';
   
-  let SQL = `SELECT ac.amc_id, ac.amc_name, ac.fund_code, as2.sharing, as2.promotion_start_date, 
-  as2.promotion_end_date, as2.activated 
+  let SQL = `SELECT ac.fund_id, ac.amc_name, ac.fund_code, as2.sharing, as2.start_date, 
+  as2.end_date, as2.activated 
 FROM funds AS ac LEFT JOIN fund_sharing AS as2 ON ac.fund_id = as2.amc_id  
 WHERE 
-  '${date}' BETWEEN as2.promotion_start_date AND COALESCE(as2.promotion_end_date, '${date}')
-  AND as2.promotion_start_date IS NOT NULL 
+  '${date}' BETWEEN as2.start_date AND COALESCE(as2.end_date, '${date}')
+  AND as2.start_date IS NOT NULL 
   AND as2.activated = 1  
-ORDER BY ac.fund_code, as2.promotion_start_date ASC;`;
+ORDER BY ac.fund_code, as2.start_date ASC;`;
   let data = [];
   try{
     D.debugLog(SQL);
@@ -219,15 +219,15 @@ router.post('/fundcode',async function (req, res) {
   const fundcode = fund_code.map(code => `'${code}'`).join(', ');
   // console.log(fundcode);
   let SQL = `SELECT 
-      ac.amc_id, ac.amc_name, ac.fund_code, as2.sharing, as2.promotion_start_date, 
-      as2.promotion_end_date, as2.activated 
+      ac.fund_id, ac.amc_name, ac.fund_code, as2.sharing, as2.start_date, 
+      as2.end_date, as2.activated 
     FROM 
       funds AS ac LEFT JOIN fund_sharing AS as2 ON ac.fund_id = as2.amc_id 
     WHERE as2.fund_code IN (${fundcode}) AND 
-      '${date}' BETWEEN as2.promotion_start_date AND COALESCE(as2.promotion_end_date, '${date}')
-      AND as2.promotion_start_date IS NOT NULL 
+      '${date}' BETWEEN as2.start_date AND COALESCE(as2.end_date, '${date}')
+      AND as2.start_date IS NOT NULL 
       AND as2.activated = 1  
-    ORDER BY ac.fund_code, as2.promotion_start_date ASC;`;
+    ORDER BY ac.fund_code, as2.start_date ASC;`;
   
   try{
     // console.log(SQL);
