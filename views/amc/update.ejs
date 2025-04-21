@@ -3,11 +3,11 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
-        <script src="../../js/lib/xlsx.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.min.js"></script>
         <style>
             table{
                 border-collapse: collapse;
-                width: 100%;             
+                width: 100%;
             };
             th,td{
                 text-align: left;
@@ -48,8 +48,8 @@
                         // console.log(workbook.SheetNames.length);
                         if(workbook.SheetNames.length > 0){
                             jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
-                            console.log(jsonData);
-                            // displayExcelData(jsonData);
+                            // console.log(jsonData);
+                            displayExcelData(jsonData);
                         }else{
                             alert("No Sheet in File Excel!!!");
                         }                        
@@ -63,7 +63,7 @@
                 excelData = [];
 
                 if (data.length > 0) {
-                    const requiredHeaders = ["no", "IC", "name", "lastname", "Target","Active"];
+                    const requiredHeaders = ["AMC", "FrontEndFee", "SellingFee", "Sharing"];
 
                     requiredHeaders.forEach(header => table += `<th>${header}</th>`);
                     table += "</tr>";
@@ -94,13 +94,20 @@
                 document.getElementById('send_button').style.display = 'block';
             }
 
+            function setDefaultDate() {
+                const dateInput = document.getElementById("createDate");
+                const today = new Date();
+                today.setDate(today.getDate() - 1);
+                const tMinusOne = today.toISOString().split('T')[0];
+                dateInput.value = tMinusOne;
+            }
 
             function sendData() {
                 console.log("sendData() --------------------------------");
-                console.log(jsonData);
+                // console.log(jsonData);
                 const createDateValue = document.getElementById("createDate").value;
                 const data2Send = {
-                    "target": jsonData,
+                    "fundcode": jsonData,
                     "createDate": createDateValue
                 };
 
@@ -112,7 +119,7 @@
                 const loadingElement = document.getElementById("loading");
                 loadingElement.style.display = "flex";
 
-                fetch('/target/upload', {
+                fetch('/amc/uploadNew', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -135,31 +142,13 @@
                     loadingElement.style.display = "none";
                 });
             }
-            function setDefaultDate() {
-                const dateInput = document.getElementById("createDate");
-                const today = new Date();
-                today.setDate(today.getDate() - 1);
-                const tMinusOne = today.toISOString().split('T')[0];
-                dateInput.value = tMinusOne;
-            }
 
             window.onload = setDefaultDate;
-
-
-            function calculateTarget(){
-                console.log("calculateTarget() --------------------------------");
-                console.log(jsonData);
-                console.log(jsonData[1]);
-                console.log( jsonData[1].IC +" "+ jsonData[1].TransactionDate+" "+jsonData[1].TransactionType);
-                console.log( jsonData[1].IC.concat(jsonData[1].TransactionDate));
-
-            }
         </script>
     </head>
     <body>
-        <h1>Update Target RM</h1>
+        <h1>Insert AMC FEE</h1>
         <p>
-
             <input type="file" name="file" id="file_upload" accept=".xlsx,.xls,.csv" onchange="upload();" />
             Update data at 
             <input type="text" name="createDate" id="createDate" value="" />

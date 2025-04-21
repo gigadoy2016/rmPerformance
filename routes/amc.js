@@ -42,7 +42,7 @@ router.post('/uploadXLS', upload.single('file'),async(req, res) => {
   
     console.log("-------------------- Start ---------------");
   
-    const sql = "INSERT INTO asset_companys (fund_code, fund_name, amc_name, selling_fee, sharing, lastUpdate) VALUES ?";
+    const sql = "INSERT INTO funds (fund_code, fund_name, amc_name, selling_fee, sharing, lastUpdate) VALUES ?";
     conn.query(sql, [records], (err, result) => {
       if (err) throw err;
       console.log(`Inserted ${result.affectedRows} records.`);
@@ -142,7 +142,7 @@ router.get('/sharing/month/:m/:y',async function(req, res, next) {
   
   let SQL = `SELECT ac.amc_id, ac.amc_name, ac.fund_code, as2.sharing, as2.promotion_start_date, 
   as2.promotion_end_date, as2.activated 
-FROM asset_companys AS ac LEFT JOIN fund_sharing AS as2 ON ac.amc_id = as2.amc_id  
+FROM funds AS ac LEFT JOIN fund_sharing AS as2 ON ac.fund_id = as2.amc_id  
 WHERE 
   '${date}' BETWEEN as2.promotion_start_date AND COALESCE(as2.promotion_end_date, '${date}')
   AND as2.promotion_start_date IS NOT NULL 
@@ -202,7 +202,7 @@ router.get('/test', function(req, res, next) {
 
 async function getAMC(){
   D.debugLog("----------------");
-  let SQL = "SELECT * FROM asset_companys";
+  let SQL = "SELECT * FROM funds ";
   try{
     data =await dbConnection.query(SQL);
     // console.log(data[0]);
@@ -222,7 +222,7 @@ router.post('/fundcode',async function (req, res) {
       ac.amc_id, ac.amc_name, ac.fund_code, as2.sharing, as2.promotion_start_date, 
       as2.promotion_end_date, as2.activated 
     FROM 
-      asset_companys AS ac LEFT JOIN fund_sharing AS as2 ON ac.amc_id = as2.amc_id 
+      funds AS ac LEFT JOIN fund_sharing AS as2 ON ac.fund_id = as2.amc_id 
     WHERE as2.fund_code IN (${fundcode}) AND 
       '${date}' BETWEEN as2.promotion_start_date AND COALESCE(as2.promotion_end_date, '${date}')
       AND as2.promotion_start_date IS NOT NULL 
@@ -240,4 +240,21 @@ router.post('/fundcode',async function (req, res) {
   }
   
 });
+
+
+router.get('/updateNew', function(req, res) {
+  D.debugLog("== amc.js updateNew() ==");
+  res.render('./amc/update', { title: 'Update' });
+});
+
+router.post('/updateNew', urlencodedParser, function(req, res) {
+  D.debugLog("== amc.js updateNew() ==");
+  let fund_code = req.body.fundcode;
+  let create_date = req.body.createDate;
+  
+  console.log(fund_code);
+  res.status(200).json({'status':'OK','data':req.body});
+});
+
+
 module.exports = router;
