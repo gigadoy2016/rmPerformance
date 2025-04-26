@@ -64,8 +64,9 @@ router.post('/addSharing',async function(req, res, next) {
   const startDate = req.body.startDate;
   const endDate = req.body.endDate;
   let sharing = req.body.sharing;
-  const amc_id = req.body.amc_id;
+  const fund_id = req.body.fund_id;
   const amc_name=req.body.amc_name;
+  const fund_code= req.body.fund_code;
   const d = new Date();
   const date = moment(d).format('YYYY-MM-DD');
   const time = moment(d).format('YYYY-MM-DD HH:mm');
@@ -80,8 +81,8 @@ router.post('/addSharing',async function(req, res, next) {
   let SQL_add = 'INSERT INTO `fund_sharing` (`amc_id`, `sharing`, `create_date`, `last_update`, `activated`, `fund_code`, `start_date`, `end_date`) ';
   SQL_add += 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
   console.log(SQL_add);
-  let data = [amc_id, sharing, date, time, '1',amc_name, startDate, endDate];
-  // console.log(data);
+  let data = [fund_id, sharing, date, time, '1',fund_code, startDate, endDate];
+  console.log(data);
   connection.query(SQL_add, data,(err, result) => {
     if(err){
       console.log(err);

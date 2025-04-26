@@ -15,7 +15,7 @@
             var HOME_URL = "";
             var DATAs = [];
             var amc_name = null;
-            var amc_id = null;
+            var fund_id = null;
             var fund_code = null;
             $(document).ready(function() {
                 console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
@@ -37,9 +37,9 @@
                 $('#amc-list tbody').on('click', 'tr', function () {
                     var data = dataTable.row(this).data();
                     amc_name = data.amc_name;
-                    amc_id = data.amc_id;
+                    fund_id = data.fund_id;
                     fund_code = data.fund_code;
-                    loadSharing(data.amc_id,data.sharing);
+                    loadSharing(data.fund_id,data.sharing);
                     $("#fund_name").html(data.fund_name);
                     $( "#dialog-form" ).dialog({title:data.fund_code}).dialog( "open");
                     // document.getElementById('default_sharing').innerHTML = (data.sharing * 100);
@@ -77,7 +77,7 @@
 
             function loadSharing(id,sharing){
                 console.log("function loadSharing()");
-                console.log(sharing);
+                // console.log(sharing);
                 document.getElementById("default_sharing").innerHTML = (sharing * 100);
                 $.get( HOME_URL+"/amc/sharing/"+id , function( data ) {
                     if(data.length >0 ){
@@ -89,18 +89,18 @@
             }
 
             function tableData(table_id,datas){
-                // console.log(datas);            
+                console.log(datas);            
                 let table = document.getElementById(table_id);
                 removeRows(table_id);
                 for(let i=0; i < datas.length;i++){
                     let data = datas[i];
-                    // amc_id= data.amc_id;
+                    fund_id= data.fund_id;
                     // amc_name= data.amc_name;
                     
-                    let start = new Date(data.promotion_start_date);
+                    let start = new Date(data.start_date);
                     let end = null;
-                    if(data.promotion_end_date){
-                        end = new Date(data.promotion_end_date).toLocaleDateString('en-CA');
+                    if(data.end_date){
+                        end = new Date(data.end_date).toLocaleDateString('en-CA');
                     }else{
                         end = '-';
                     }
@@ -238,7 +238,7 @@
                                     'startDate': st_date,
                                     'endDate':ed_date,
                                     'sharing':sharing,
-                                    'amc_id':amc_id,
+                                    'fund_id':fund_id,
                                     'amc_name':amc_name,
                                     'fund_code':fund_code
                                 })
