@@ -42,7 +42,7 @@ router.post('/uploadXLS', upload.single('file'),async(req, res) => {
   
     console.log("-------------------- Start ---------------");
   
-    const sql = "INSERT INTO funds (fund_code, fund_name, amc_name, selling_fee, sharing, lastUpdate) VALUES ?";
+    const sql = "INSERT INTO funds (fund_code, fund_name, amc_name, selling_fee, rm_sharing, lastUpdate) VALUES ?";
     conn.query(sql, [records], (err, result) => {
       if (err) throw err;
       console.log(`Inserted ${result.affectedRows} records.`);
@@ -64,6 +64,7 @@ router.post('/addSharing',async function(req, res, next) {
   const startDate = req.body.startDate;
   const endDate = req.body.endDate;
   let sharing = req.body.sharing;
+  let saSharing = req.body.saSharing;
   const fund_id = req.body.fund_id;
   const amc_name=req.body.amc_name;
   const fund_code= req.body.fund_code;
@@ -76,12 +77,15 @@ router.post('/addSharing',async function(req, res, next) {
   if(sharing !== undefined){
     sharing = sharing / 100;
   }
+  if(saSharing !== undefined){
+    saSharing = saSharing / 100;
+  }
 
 
-  let SQL_add = 'INSERT INTO `fund_sharing` (`amc_id`, `sharing`, `create_date`, `last_update`, `activated`, `fund_code`, `start_date`, `end_date`) ';
-  SQL_add += 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-  console.log(SQL_add);
-  let data = [fund_id, sharing, date, time, '1',fund_code, startDate, endDate];
+  let SQL_add = 'INSERT INTO `fund_sharing` (`amc_id`, `rm_sharing`, `sa_sharing`, `create_date`, `last_update`, `activated`, `fund_code`, `start_date`, `end_date`) ';
+  SQL_add += 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  // console.log(SQL_add);
+  let data = [fund_id, sharing, saSharing, date, time, '1',fund_code, startDate, endDate];
   console.log(data);
   connection.query(SQL_add, data,(err, result) => {
     if(err){
@@ -141,7 +145,7 @@ router.get('/sharing/month/:m/:y',async function(req, res, next) {
   let y = req.params.y;
   let date = y+'-'+m+'-01';
   
-  let SQL = `SELECT ac.fund_id, ac.amc_name, ac.fund_code, as2.sharing, as2.start_date, 
+  let SQL = `SELECT ac.fund_id, ac.amc_name, ac.fund_code, as2.rm_sharing,as2.sa_sharing, as2.start_date, 
   as2.end_date, as2.activated 
 FROM funds AS ac LEFT JOIN fund_sharing AS as2 ON ac.fund_id = as2.amc_id  
 WHERE 
@@ -206,7 +210,7 @@ async function getAMC(){
   let SQL = "SELECT * FROM funds ";
   try{
     data =await dbConnection.query(SQL);
-    // console.log(data[0]);
+    console.log(data[0]);
     return data[0];
   }catch(e){
     D.debugLog(e);
@@ -220,7 +224,7 @@ router.post('/fundcode',async function (req, res) {
   const fundcode = fund_code.map(code => `'${code}'`).join(', ');
   // console.log(fundcode);
   let SQL = `SELECT 
-      ac.fund_id, ac.amc_name, ac.fund_code, as2.sharing, as2.start_date, 
+      ac.fund_id, ac.amc_name, ac.fund_code, as2.rm_sharing,as2.sa_sharing, as2.start_date, 
       as2.end_date, as2.activated 
     FROM 
       funds AS ac LEFT JOIN fund_sharing AS as2 ON ac.fund_id = as2.amc_id 

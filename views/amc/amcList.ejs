@@ -39,7 +39,7 @@
                     amc_name = data.amc_name;
                     fund_id = data.fund_id;
                     fund_code = data.fund_code;
-                    loadSharing(data.fund_id,data.sharing);
+                    loadSharing(data.fund_id,data.rm_sharing);
                     $("#fund_name").html(data.fund_name);
                     $( "#dialog-form" ).dialog({title:data.fund_code}).dialog( "open");
                     // document.getElementById('default_sharing').innerHTML = (data.sharing * 100);
@@ -77,24 +77,26 @@
 
             function loadSharing(id,sharing){
                 console.log("function loadSharing()");
-                // console.log(sharing);
+                // console.log(fund_id);
                 document.getElementById("default_sharing").innerHTML = (sharing * 100);
                 $.get( HOME_URL+"/amc/sharing/"+id , function( data ) {
                     if(data.length >0 ){
-                        tableData("amc_sharing",data);
+                        tableData("fund_sharing",data);
                     }else{
-                        settableZero("amc_sharing");
+                        settableZero("fund_sharing");
                     }
                 });
             }
 
             function tableData(table_id,datas){
-                console.log(datas);            
+                console.log("function tableData()");
+                // console.log(fund_id);
+                // console.log(datas);
                 let table = document.getElementById(table_id);
                 removeRows(table_id);
                 for(let i=0; i < datas.length;i++){
                     let data = datas[i];
-                    fund_id= data.fund_id;
+                    // fund_id= data.fund_id;
                     // amc_name= data.amc_name;
                     
                     let start = new Date(data.start_date);
@@ -110,13 +112,15 @@
                     let cell0 = row.insertCell(0);
                     cell0.innerHTML = i+1;
                     let cell1 = row.insertCell(1);
-                    cell1.innerHTML = (data.sharing*100) +'%';
+                    cell1.innerHTML = (data.rm_sharing*100) +'%';
                     let cell2 = row.insertCell(2);
-                    cell2.innerHTML = start.toLocaleDateString('en-CA');
+                    cell2.innerHTML = (data.sa_sharing*100) +'%';
                     let cell3 = row.insertCell(3);
-                    cell3.innerHTML = end;
+                    cell3.innerHTML = start.toLocaleDateString('en-CA');
                     let cell4 = row.insertCell(4);
-                    cell4.innerHTML = (data.activated==1)?'Y':'N' ;
+                    cell4.innerHTML = end;
+                    let cell5 = row.insertCell(5);
+                    cell5.innerHTML = (data.activated==1)?'Y':'N' ;
                 }
                 
             }
@@ -180,15 +184,16 @@
         </div>
         <div id="dialog-form" title="AMC Detail" class="row">
             <p class="validateTips" id="fund_name"></p>
-            <label for="fundCode">Default Sharing :</label>
+            <label for="fundCode">RM Sharing :</label>
             <label id="default_sharing" class="readOnly">100</label>
             <div style="margin-top: 2em;">
                 <label>sharing log..</label>
             </div>
-            <table class="tb col-12" id="amc_sharing">
+            <table class="tb col-12" id="fund_sharing">
                 <tr>
                     <th>no.</th>
-                    <th>sharing</th>
+                    <th>RM sharing</th>
+                    <th>Globlex sharing</th>
                     <th>start</th>
                     <th>end</th>
                     <th>activated</th>
@@ -214,17 +219,25 @@
                     <input type="date" id="ed_date" name="ed_date"/>
                 </div>
                 <div class="row" style="margin-top: 1em;">
-                    <label>Sharing Rate:</label>
+                    <label>RM Sharing Rate:</label>
                     <input type="number" name="sharingRate" id="sharingRate" value="75" size="2" min="0" max="100" step="1" style="width: 3em;text-align: right;"/>
+                    <label>%</label>
+                </div>
+                <div class="row" style="margin-top: 1em;">
+                    <label>Globlex Sharing Rate:</label>
+                    <input type="number" name="GB_SharingRate" id="GB_SharingRate" value="75" size="2" min="0" max="100" step="1" style="width: 3em;text-align: right;"/>
                     <label>%</label>
                 </div>
                 <script>
                     function validate(){
+                        console.log("+++++validate()+++++");
+                        // console.log(fund_id);
                         const URL = HOME_URL+'/amc/addSharing';
 
                         let st_date = document.getElementById('st_date').value;
                         let ed_date = document.getElementById('ed_date').value;
                         let sharing = document.getElementById('sharingRate').value;
+                        let saSharing = document.getElementById('GB_SharingRate').value;
 
                         if(st_date === '' || ed_date === ''){
                             alert('กรุณาระบุ วันที่ลงในระบบ');
@@ -238,6 +251,7 @@
                                     'startDate': st_date,
                                     'endDate':ed_date,
                                     'sharing':sharing,
+                                    'saSharing':saSharing,
                                     'fund_id':fund_id,
                                     'amc_name':amc_name,
                                     'fund_code':fund_code
@@ -245,6 +259,7 @@
                             }).then(response => response.json())
                             .then(function(data){
                                 console.log(data);
+                                console.log(fund_id);
                                 $("#add-form").dialog("close");
                                 return true;
                             }).catch(function(error){
