@@ -99,7 +99,7 @@ class TransactionTable{
             cell1.innerHTML = this.getCurrency(fundCode.subAmount);
             cell1.style.textAlign = "right";
 
-            let text6 = 'Sharing = '+(fundCode.wccSharing*100)+'%';
+            let text6 = 'SA Sharing = '+(fundCode.saSharing*100)+'%';
             let incentive = fundCode.incentive *100;
             let rmSharing = fundCode.rmSharing *100;
             text6 += ', RM = '+rmSharing+'%';
@@ -115,7 +115,7 @@ class TransactionTable{
             cell7.innerHTML = this.getCurrency(fundCode.swiAmount);
             cell7.style.textAlign = "right";
 
-            let text12 = 'Sharing = '+(fundCode.wccSharing*100)+'%';
+            let text12 = 'SA Sharing = '+(fundCode.saSharing*100)+'%';
             text12 += ', RM = '+rmSharing+'%';
             text12 = "Net Fee= "+this.getCurrency(fundCode.swiNetFee)+": "+text12;
             if(this.permission >=3 ){

@@ -24,7 +24,7 @@ class User{
     private profigTotal:number;
     private frontEndFee:number;
 
-    private wccFrontEndFee:number;
+    private saFrontEndFee:number;
     private wccTrailingFee:number;
     private wccPromotion:number;
     private totalRevenue:number;
@@ -35,26 +35,28 @@ class User{
 
     private detail:any;
 
-    private backEndWccSharing:any = [
-        {AMC:"KTAM",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
-        {AMC:"EASTSPRING",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
-        {AMC:"KASSET",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
-        {AMC:"ASSETFUND",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
-        {AMC:"PRINCIPAL",sharing:0.7},
-        {AMC:"MFC",sharing:0.7},
-        {AMC:"SCBAM",sharing:0.7},
-        {AMC:"ONEAM",sharing:0.7},
-        {AMC:"UOBAM",sharing:0.7},
-        {AMC:"LHFUND",sharing:0.7},
-        {AMC:"KSAM",sharing:0.7},
-        {AMC:"KKPAM",sharing:0.8},
-        {AMC:"ABERDEEN",sharing:0.8}
-    ];
+    // private backEndWccSharing:any = [
+    //     {AMC:"KTAM",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
+    //     {AMC:"EASTSPRING",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
+    //     {AMC:"KASSET",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
+    //     {AMC:"ASSETFUND",sharing:1,fundcode:"all","enable_st":"2025-02-01"},
+    //     {AMC:"PRINCIPAL",sharing:0.7},
+    //     {AMC:"MFC",sharing:0.7},
+    //     {AMC:"SCBAM",sharing:0.7},
+    //     {AMC:"ONEAM",sharing:0.7},
+    //     {AMC:"UOBAM",sharing:0.7},
+    //     {AMC:"LHFUND",sharing:0.7},
+    //     {AMC:"KSAM",sharing:0.7},
+    //     {AMC:"KKPAM",sharing:0.8},
+    //     {AMC:"ABERDEEN",sharing:0.8}
+    // ];
 
     constructor(ic_code,transactions,amcSharing){ 
         this.icCode = ic_code;
         this.fundSharing = amcSharing;
         this.transactions = transactions;
+        console.log("==== New Object User ====");
+        console.log(this.fundSharing)
     }
     public setUserData(user){
         this.nameEng = user.name_eng;
@@ -128,15 +130,18 @@ class User{
         let grandTotalSwiFontEndFee = 0;
         let grandTotalAmount = 0;
         let grandTotalFrontEndFee = 0;
-        let grandTotalWCCFrontEndFee = 0;
+        let grandTotalSaFrontEndFee = 0;
         let grandWaitingAmount = 0;
+        let rm_sharing = 0.7;
+        let sa_sharing = 0.7;
+        let sharingObj;
+
         trans.sort((x, y) => x.fund_code.localeCompare(y.fund_code));
         // console.log(trans);
         // console.log(" ------------------ Fund Sharing -------------------");
         if(this.fundSharing){
-            this.fundSharing.sort((a, b) => new Date(b.promotion_start_date).getTime() - new Date(a.promotion_start_date).getTime());
+            this.fundSharing.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
         }
-        
 
         const fundcodes: Array<any> = [];
         let i = 1;
@@ -147,20 +152,28 @@ class User{
             let fee = this.string2Number(transaction.fee);
             let type = transaction.transaction_type;
             let sharing = this.sharingDefault;
-            let _sharing;
+            // let _sharing;
             if(this.fundSharing){
-                _sharing = this.fundSharing.find(f => f.fund_code === transaction.fund_code);    
+                // _sharing = this.fundSharing.find(f => f.fund_code === transaction.fund_code);
+                sharingObj = this.fundSharing.find(f => f.fund_code === transaction.fund_code);
             }
             // let _sharing = this.fundSharing.find(f => f.fund_code === transaction.fund_code);
             let status = transaction.status;
             let amc_name = transaction.amc_code;
 
 
-            if(_sharing !== undefined){
-                sharing = parseFloat(_sharing.sharing);
-                sharing = this.getValidateFreelancer(this.icCode,amc_name,transaction.transaction_date,sharing);
+            // if(_sharing !== undefined){
+            //     sharing = parseFloat(_sharing.sharing);
+            //     sharing = this.getValidateFreelancer(this.icCode,amc_name,transaction.transaction_date,sharing);
+            // }else{
+            //     sharing = this.getValidateFreelancer(this.icCode,amc_name,transaction.transaction_date,sharing);
+            // }
+            if(sharingObj !== undefined){
+                rm_sharing = parseFloat(sharingObj.rm_sharing);
+                sa_sharing = parseFloat(sharingObj.sa_sharing);
+                // sharing = this.getValidateFreelancer(this.icCode,amc_name,transaction.transaction_date,sharing);
             }else{
-                sharing = this.getValidateFreelancer(this.icCode,amc_name,transaction.transaction_date,sharing);
+                // sharing = this.getValidateFreelancer(this.icCode,amc_name,transaction.transaction_date,sharing);
             }
             
             if(type === 'SUB' || type === 'SWI'){
@@ -182,11 +195,11 @@ class User{
                         totalAmount: 0,
                         totalFrontEndFee: 0,
                         sharing:sharing,
-                        wccSharing:sharing,
-                        rmSharing:0.7,
-                        wccFrontEndFee:0,
-                        wccSubFEF:0,
-                        wccSwiFEF:0,
+                        saSharing:sa_sharing,
+                        rmSharing:rm_sharing,
+                        saFrontEndFee:0,
+                        saSubFEF:0,
+                        saSwiFEF:0,
                         waitingAmount:0,
                         incentive:this.incentive
                     };
@@ -221,20 +234,21 @@ class User{
                         fund.subAmount +=Math.floor(this.string2Number(transaction.confirmed_amount));
                         fund.subFee += Math.floor(this.string2Number(transaction.fee));
                         fund.subWH = fund.subFee * this.rateWithHolding;
-                        fund.subNetFee = fund.subFee - fund.subWH;
+                        // fund.subNetFee = fund.subFee - fund.subWH;
+                        fund.subNetFee = fund.subFee;
 
-                        let fee = this.calculationSharing(transaction,fund.subNetFee,sharing,fund.incentive);
-                        fund.wccSubFEF = fee.wccResult;
-                        fund.subFrontEndFee = fee.rmResult;
-                        fund.wccSharing = fee.wccSharing;
-                        fund.rmSharing = fee.rmSharing;
-                        // fund.wccSubFEF = fund.subNetFee * amcSharing.sharing;
-                        // fund.subFrontEndFee = Math.floor(fund.wccSubFEF * sharing * inc);
-                        // fund.wccSubFEF = fund.subNetFee * sharing;
+                        // let fee = this.calculationSharing(transaction,fund.subNetFee,sharing,fund.incentive);
+                        fund.saSubFEF = fund.subNetFee * sa_sharing;
+                        fund.subFrontEndFee = fund.subNetFee * rm_sharing;
+                        fund.saSharing = sa_sharing;
+                        fund.rmSharing = rm_sharing;
+                        // fund.saSubFEF = fund.subNetFee * amcSharing.sharing;
+                        // fund.subFrontEndFee = Math.floor(fund.saSubFEF * sharing * inc);
+                        // fund.saSubFEF = fund.subNetFee * sharing;
                         // if(amc_name !=='PRINCIPAL'){
-                        //     fund.subFrontEndFee = Math.floor(fund.wccSubFEF * 0.7);
+                        //     fund.subFrontEndFee = Math.floor(fund.saSubFEF * 0.7);
                         // }else{
-                        //     fund.subFrontEndFee = Math.floor(fund.wccSubFEF);
+                        //     fund.subFrontEndFee = Math.floor(fund.saSubFEF);
                         // }
                         
 
@@ -242,25 +256,26 @@ class User{
                         fund.swiAmount += Math.floor(this.string2Number(transaction.confirmed_amount));
                         fund.swiFee += Math.floor(this.string2Number(transaction.fee));
                         fund.swiWH = fund.swiFee * this.rateWithHolding;
-                        fund.swiNetFee = fund.swiFee - fund.swiWH;
+                        // fund.swiNetFee = fund.swiFee - fund.swiWH;
+                        fund.swiNetFee = fund.swiFee;
 
-                        let fee = this.calculationSharing(transaction,fund.swiNetFee,sharing,fund.incentive);
-                        fund.wccSwiFEF = fee.wccResult;
-                        fund.swiFrontEndFee = fee.rmResult;
-                        fund.wccSharing = fee.wccSharing;
-                        fund.rmSharing = fee.rmSharing;
-                        // fund.wccSwiFEF = fund.swiNetFee * amcSharing.sharing;
-                        // fund.swiFrontEndFee = Math.floor(fund.wccSwiFEF * sharing * inc);
-                        // fund.wccSwiFEF = fund.swiNetFee * sharing;
+                        // let fee = this.calculationSharing(transaction,fund.swiNetFee,sharing,fund.incentive);
+                        fund.saSwiFEF = fund.swiNetFee * sa_sharing;
+                        fund.swiFrontEndFee = fund.swiNetFee * rm_sharing;
+                        fund.saSharing = sa_sharing;
+                        fund.rmSharing = rm_sharing;
+                        // fund.saSwiFEF = fund.swiNetFee * amcSharing.sharing;
+                        // fund.swiFrontEndFee = Math.floor(fund.saSwiFEF * sharing * inc);
+                        // fund.saSwiFEF = fund.swiNetFee * sharing;
                         // if(amc_name !=='PRINCIPAL'){
-                        //     fund.swiFrontEndFee = Math.floor(fund.wccSwiFEF * 0.7);
+                        //     fund.swiFrontEndFee = Math.floor(fund.saSwiFEF * 0.7);
                         // }else{
-                        //     fund.swiFrontEndFee = Math.floor(fund.wccSwiFEF);
+                        //     fund.swiFrontEndFee = Math.floor(fund.saSwiFEF);
                         // }
                     }
                     // คำนวณ totalAmount และ totalFrontEndFee
-                    // fund.wccFrontEndFee = (fund.subNetFee + fund.swiNetFee) * inc;
-                    fund.wccFrontEndFee = fund.wccSwiFEF + fund.wccSubFEF;
+                    // fund.saFrontEndFee = (fund.subNetFee + fund.swiNetFee) * inc;
+                    fund.saFrontEndFee = fund.saSwiFEF + fund.saSubFEF;
                     fund.totalAmount = fund.subAmount + fund.swiAmount;
                     fund.totalFrontEndFee = Math.floor(fund.subFrontEndFee + fund.swiFrontEndFee);
                 
@@ -281,7 +296,7 @@ class User{
             grandTotalSwiFontEndFee += fundcodes[i].swiFrontEndFee;
             grandTotalAmount += fundcodes[i].totalAmount;
             grandTotalFrontEndFee += fundcodes[i].totalFrontEndFee;
-            grandTotalWCCFrontEndFee += fundcodes[i].wccFrontEndFee;
+            grandTotalSaFrontEndFee += fundcodes[i].saFrontEndFee;
             grandWaitingAmount += fundcodes[i].waitingAmount;
         }
         this.performance = grandTotalFrontEndFee + this.trailingFee - this.target;
@@ -302,7 +317,7 @@ class User{
             '4grandTotalSwiFontEndFee': grandTotalSwiFontEndFee,
             '5grandTotalAmount': grandTotalAmount,
             '6grandTotalFrontEndFee': grandTotalFrontEndFee,
-            '7grandTotalWCCFrontEndFee': grandTotalWCCFrontEndFee,
+            '7grandTotalSaFrontEndFee': grandTotalSaFrontEndFee,
             'waitingAmount': grandWaitingAmount,
             'trailingFee':this.trailingFee,
             'profile': this.profile,
@@ -334,10 +349,10 @@ class User{
         const trans = this.getTransactionsByIC();
         return this.getFundCode(trans);
     }
-    public getSharingByAmcCode(amcCode) {
-        let result = this.backEndWccSharing.find(item => item.AMC === amcCode);
-        return result ? result.sharing : null; 
-    }
+    // public getSharingByAmcCode(amcCode) {
+    //     let result = this.backEndWccSharing.find(item => item.AMC === amcCode);
+    //     return result ? result.sharing : null; 
+    // }
 
     public getValidateFreelancer(ic_code:string ,amcCode:string,transactionDate:string,sharing:number){
 
@@ -360,39 +375,39 @@ class User{
         return sharing;
     }
 
-    public calculationSharing(tran,netFee,fundCodeSharing,incentive){
-        let ic_code = this.icCode;
-        let wccSharing = 1;
-        let rmSharing = 0;
-        let wccResult = 0;
-        let rmResult = 0;
+    // public calculationSharing(tran,netFee,fundCodeSharing,incentive){
+    //     let ic_code = this.icCode;
+    //     let wccSharing = 1;
+    //     let rmSharing = 0;
+    //     let wccResult = 0;
+    //     let rmResult = 0;
 
-        let tran_amc = tran.amc_code;
-        const amc = ['KTAM','EASTSPRING','KASSET','ASSETFUND'];
+    //     let tran_amc = tran.amc_code;
+    //     const amc = ['KTAM','EASTSPRING','KASSET','ASSETFUND'];
         
-        if(ic_code.indexOf('F') >= 0 ){   //
-            if(amc.includes(tran_amc)){
-                wccSharing = 1;
-                rmSharing = incentive;
-                wccResult = netFee * wccSharing;
-                rmResult = wccResult * rmSharing;
-            }else{
-                wccSharing = fundCodeSharing;
-                rmSharing = incentive;
-                wccResult = netFee * wccSharing;
-                rmResult = wccResult * rmSharing;
-            }
-        }else if(amc.includes(tran_amc) && ic_code.indexOf('F') < 0){   //เป็นพนักงานประจำและซื้อกองใน 4 บลจ 100
-            wccSharing = 1;
-            rmSharing = 0.7;
-            wccResult = netFee * wccSharing;
-            rmResult = wccResult * rmSharing;
-        }else{  //เป็นพนักงานประจำและซื้อกองนอกเหนือ 4 บลจ 100
-            wccSharing = fundCodeSharing;
-            rmSharing = 1;
-            wccResult = netFee * wccSharing;
-            rmResult = wccResult * rmSharing;
-        }
-        return { 'wccResult':wccResult, 'rmResult':rmResult, 'wccSharing': wccSharing, 'rmSharing':rmSharing};
-    }
+    //     if(ic_code.indexOf('F') >= 0 ){   //
+    //         if(amc.includes(tran_amc)){
+    //             wccSharing = 1;
+    //             rmSharing = incentive;
+    //             wccResult = netFee * wccSharing;
+    //             rmResult = wccResult * rmSharing;
+    //         }else{
+    //             wccSharing = fundCodeSharing;
+    //             rmSharing = incentive;
+    //             wccResult = netFee * wccSharing;
+    //             rmResult = wccResult * rmSharing;
+    //         }
+    //     }else if(amc.includes(tran_amc) && ic_code.indexOf('F') < 0){   //เป็นพนักงานประจำและซื้อกองใน 4 บลจ 100
+    //         wccSharing = 1;
+    //         rmSharing = 0.7;
+    //         wccResult = netFee * wccSharing;
+    //         rmResult = wccResult * rmSharing;
+    //     }else{  //เป็นพนักงานประจำและซื้อกองนอกเหนือ 4 บลจ 100
+    //         wccSharing = fundCodeSharing;
+    //         rmSharing = 1;
+    //         wccResult = netFee * wccSharing;
+    //         rmResult = wccResult * rmSharing;
+    //     }
+    //     return { 'wccResult':wccResult, 'rmResult':rmResult, 'wccSharing': wccSharing, 'rmSharing':rmSharing};
+    // }
 }

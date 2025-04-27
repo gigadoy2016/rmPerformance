@@ -116,7 +116,7 @@ var TransactionTable = /** @class */ (function () {
             cell1_1.style.textAlign = "left";
             cell1_1.innerHTML = this.getCurrency(fundCode.subAmount);
             cell1_1.style.textAlign = "right";
-            var text6 = 'Sharing = ' + (fundCode.wccSharing * 100) + '%';
+            var text6 = 'SA Sharing = ' + (fundCode.saSharing * 100) + '%';
             var incentive = fundCode.incentive * 100;
             var rmSharing = fundCode.rmSharing * 100;
             text6 += ', RM = ' + rmSharing + '%';
@@ -130,7 +130,7 @@ var TransactionTable = /** @class */ (function () {
             cell6_1.style.textAlign = "right";
             cell7.innerHTML = this.getCurrency(fundCode.swiAmount);
             cell7.style.textAlign = "right";
-            var text12 = 'Sharing = ' + (fundCode.wccSharing * 100) + '%';
+            var text12 = 'SA Sharing = ' + (fundCode.saSharing * 100) + '%';
             text12 += ', RM = ' + rmSharing + '%';
             text12 = "Net Fee= " + this.getCurrency(fundCode.swiNetFee) + ": " + text12;
             if (this.permission >= 3) {
