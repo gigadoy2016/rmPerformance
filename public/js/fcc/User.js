@@ -135,6 +135,8 @@ var User = /** @class */ (function () {
             }
             else {
                 // sharing = this.getValidateFreelancer(this.icCode,amc_name,transaction.transaction_date,sharing);
+                rm_sharing = transaction.rm_sharing;
+                sa_sharing = transaction.sa_sharing;
             }
             if (type === 'SUB' || type === 'SWI') {
                 if (!fund) {

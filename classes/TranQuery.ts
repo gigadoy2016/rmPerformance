@@ -39,14 +39,15 @@ export class TranQuery extends Transaction{
             ,DATE_FORMAT(T.settlement_date, '%d/%m/%Y') settlement_date
             ,T.settlement_bank 
 		    ,AMC.selling_fee 
-            ,AMC.sharing 
+            ,AMC.rm_sharing 
+            ,AMC.sa_sharing 
             ,(T.fee * 0.03) wh3 
             ,order_reference
             ,xwt_reference_no
             ,counter_payment_type
             ,counter_fund_code 
         FROM transactions T LEFT JOIN   
-            asset_companys AMC 
+            funds AMC 
             ON T.fund_code = AMC.fund_code `;
         SQL += "WHERE T.transaction_date BETWEEN  STR_TO_DATE('"+startDate+" 00:01','%Y-%m-%d %H:%i') AND STR_TO_DATE('"+endDate+" 23:59','%Y-%m-%d %H:%i')"
         // SQL += "WHERE T.allotment_date BETWEEN  STR_TO_DATE('"+startDate+" 00:01','%Y-%m-%d %H:%i') AND STR_TO_DATE('"+endDate+" 23:59','%Y-%m-%d %H:%i')"
@@ -84,14 +85,15 @@ export class TranQuery extends Transaction{
             ,DATE_FORMAT(T.settlement_date, '%d/%m/%Y') settlement_date
             ,T.settlement_bank 
 		    ,AMC.selling_fee 
-            ,AMC.sharing 
+            ,AMC.rm_sharing 
+            ,AMC.sa_sharing 
             ,(T.fee * 0.03) wh3 
             ,order_reference
             ,xwt_reference_no
             ,counter_payment_type
             ,counter_fund_code 
         FROM transactions T LEFT JOIN   
-            asset_companys AMC 
+            funds AMC 
             ON T.fund_code = AMC.fund_code `;
         SQL += "WHERE T.allotment_date BETWEEN  STR_TO_DATE('"+startDate+"','%Y-%m-%d') AND STR_TO_DATE('"+endDate+"','%Y-%m-%d')"
         SQL += " AND (T.status='ALLOTTED' OR T.status='WAITING' OR T.status='SUBMITTED' OR T.status='APPROVED') "
@@ -284,14 +286,15 @@ export class TranQuery extends Transaction{
             ,DATE_FORMAT(T.settlement_date, '%d/%m/%Y') settlement_date
             ,T.settlement_bank 
             ,AMC.selling_fee 
-            ,AMC.sharing 
+            ,AMC.rm_sharing 
+            ,AMC.sa_sharing 
             ,(T.fee * 0.03) wh3 
             ,order_reference
             ,xwt_reference_no
             ,counter_payment_type
             ,counter_fund_code 
         FROM transactions T LEFT JOIN   
-            asset_companys AMC 
+            funds AMC 
             ON T.fund_code = AMC.fund_code `;
     }
 // let datas = [{"Transaction Date":"01/02/2023 09:28","Account ID":"OM00119","Unitholder ID":"077400000071","Type":"OMN","Customer Name":"นาง มนวิภา เพ็ชรสุวรรณ","Transaction Type":"SUB","Registrar Flag":"","Fund Code":"ASP-DPLUS","ISIN":"TH7710010003","Cut-off Time":"15:30","Currency":"THB","Amount":100,"Unit":"","Sell All Unit":"","Status":"ALLOTTED","Confirmed Amount":100,"Confirmed Units":9.2158,"Effective Date":"01/02/2023","Settlement Date":"01/02/2023","Transaction ID":"2282302010341519","Payment Type":"TRN_SA","Bank/Issued By":"SCB","Bank Account/Credit No./Point Code":"0493147974","Approval Code":"","Cheque Date":"","Cheque No":"","Cheque Branch":"","Reject Reason":"","AMC Code":"ASSETFUND","PT":"N","IC":"4100","IC Branch":"400","Approver":"prakop.a","Last Update":"01/02/2023 20:34","Referral":"สุดคนึง หงส์ลดา","Settlement Bank":"SCB","Settlement Bank Account":"0493129120","Allotment Date":"01/02/2023","NAV Date":"01/02/2023","Investor Payment Instructor":"","Investor Payment Status":"","Fund Settlement Flag":"Y","Finnet Processing Type":"","Order Referral":"","Recurring Flag":"N","SA Recurring Order Reference No":"","Fee":0,"Withholding Tax":0,"VAT":0,"BCP":"N","Channel":"MKT","Reason to sell LTF/RMF":"","Allotted NAV":10.8509,"V.+ Order Ref. / AMC Order Ref.":"007723000190"},{"Transaction Date":"01/02/2023 09:30","Account ID":"OM00119","Unitholder ID":"9000000839","Type":"OMN","Customer Name":"นาง มนวิภา เพ็ชรสุวรรณ","Transaction Type":"SUB","Registrar Flag":"","Fund Code":"KFCASH-A","ISIN":"TH2759010006","Cut-off Time":"15:30","Currency":"THB","Amount":500,"Unit":"","Sell All Unit":"","Status":"ALLOTTED","Confirmed Amount":500,"Confirmed Units":37.3081,"Effective Date":"01/02/2023","Settlement Date":"01/02/2023","Transaction ID":"2282302010341520","Payment Type":"TRN_SA","Bank/Issued By":"SCB","Bank Account/Credit No./Point Code":"0493147974","Approval Code":"","Cheque Date":"","Cheque No":"","Cheque Branch":"","Reject Reason":"","AMC Code":"KSAM","PT":"N","IC":"4100","IC Branch":"400","Approver":"prakop.a","Last Update":"02/02/2023 08:22","Referral":"สุดคนึง หงส์ลดา","Settlement Bank":"SCB","Settlement Bank Account":"0593043240","Allotment Date":"01/02/2023","NAV Date":"01/02/2023","Investor Payment Instructor":"","Investor Payment Status":"","Fund Settlement Flag":"Y","Finnet Processing Type":"","Order Referral":"","Recurring Flag":"N","SA Recurring Order Reference No":"","Fee":0,"Withholding Tax":0,"VAT":0,"BCP":"N","Channel":"MKT","Reason to sell LTF/RMF":"","Allotted NAV":13.4019,"V.+ Order Ref. / AMC Order Ref.":"20230203201961"}];
