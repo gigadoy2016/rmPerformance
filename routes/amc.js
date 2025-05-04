@@ -8,6 +8,7 @@ const moment = require('moment');
 const {  conn,connection,dbConnection,HOSTIP } = require('../config/dbConfig');
 const {  AssetCompany } = require('../classes/AssetCompany');
 const {  Debug } = require('../classes/Debug');
+
 let D = new Debug(true,"amc.js");
 
 const bodyParser = require('body-parser');  
@@ -260,6 +261,32 @@ router.post('/updateNew', urlencodedParser, function(req, res) {
   console.log(fund_code);
   res.status(200).json({'status':'OK','data':req.body});
 });
+router.get('/new', function(req, res) {
+  D.debugLog("== amc.js new() ==");
+  res.render('./amc/new', { title: 'New FundCode' });
+});
 
+router.post('/newFundCode',async (req, res) => {
+  D.debugLog("== amc.js newFundCode() ==");
+  const {
+    amc_name, fund_code, fund_name,
+    front_end_fee, selling_fee, rm_sharing, sa_sharing
+  } = req.body;
+
+  // จำลอง insert: ควรแทนที่ด้วยการเชื่อมต่อ DB จริง เช่น MySQL
+  console.log('Received new fund:', req.body);
+  try{
+    const sql = `INSERT INTO funds (amc_name, fund_code, fund_name, front_end_fee, selling_fee, rm_sharing, sa_sharing) 
+    VALUES (?)`;
+    const values = [amc_name,fund_code,fund_name,front_end_fee,selling_fee,rm_sharing,sa_sharing];
+    const [result] = await dbConnection.query(sql, [values]);
+
+    // สมมุติว่า insert สำเร็จ
+    res.json({ message: 'Fund saved',result:result });
+  }catch(e){
+    console.log(e);
+    res.status(500).json({ message: 'Error saving fund' });
+  }
+});
 
 module.exports = router;

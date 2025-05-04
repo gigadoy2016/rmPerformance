@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add New Fund</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      padding: 40px;
+    }
+
+    .form-container {
+      background-color: white;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+
+    label {
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      padding: 8px 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+    }
+
+    input[type="submit"] {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    .row {
+      display: flex;
+      gap: 20px;
+    }
+
+    .row .form-group {
+      flex: 1;
+    }
+
+    .message {
+      margin-top: 20px;
+      text-align: center;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>Add New Fund</h2>
+    <form id="fundForm">
+      <div class="form-group">
+        <label>Fund Name:</label>
+        <input type="text" name="fund_name" required>
+      </div>
+      <div class="form-group">
+        <label>AMC Name:</label>
+        <input type="text" name="amc_name" required>
+      </div>
+      <div class="form-group">
+        <label>Fund Code:</label>
+        <input type="text" name="fund_code" required>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label>Front-End Fee:</label>
+          <input type="number" name="front_end_fee" step="0.0001" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Selling Fee:</label>
+          <input type="number" name="selling_fee" step="0.0001" min="0">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label>RM Sharing (%):</label>
+          <input type="number" name="rm_sharing" step="0.01" min="0" max="100" required style="width: 100%;">
+        </div>
+        <div class="form-group">
+          <label>SA Sharing (%):</label>
+          <input type="number" name="sa_sharing" step="0.01" min="0" max="100" required style="width: 100%;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <input type="submit" value="Submit">
+      </div>
+
+      <div class="message" id="message"></div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('fundForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      // Validate RM & SA Sharing
+      let rm = parseFloat(data.rm_sharing);
+      let sa = parseFloat(data.sa_sharing);
+      if (rm < 0 || rm > 100 || sa < 0 || sa > 100) {
+        message.textContent = 'RM/SA Sharing ต้องอยู่ระหว่าง 0 ถึง 100';
+        return;
+      }
+
+      // Convert % to decimal
+      data.rm_sharing = rm / 100;
+      data.sa_sharing = sa / 100;
+
+      try {
+        const res = await fetch('./newFundCode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          message.textContent = 'บันทึกข้อมูลสำเร็จ!';
+          console.log(res.result);
+          form.reset();
+        } else {
+          message.textContent = 'Error: ' + result.message;
+        }
+      } catch (err) {
+        message.textContent = 'Network error: ' + err.message;
+      }
+    });
+  </script>
+
+</body>
+</html>

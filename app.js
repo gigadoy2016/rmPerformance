@@ -21,7 +21,7 @@ const reportRouter = require('./routes/report');
 const announceRouter = require('./routes/announcement');
 const aumRouter = require('./routes/aum');
 const targetRouter = require('./routes/target');
-
+const cors = require('cors');
 const cookieSession = require('cookie-session');
 const bodyParser = require('body-parser');
 
@@ -46,6 +46,7 @@ app.use('/js', express.static(__dirname + 'public/js'));
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(cors());
 // use res.render to load up an ejs view file
 
 // index page Login first
