@@ -119,11 +119,38 @@
                     cell3.innerHTML = start.toLocaleDateString('en-CA');
                     let cell4 = row.insertCell(4);
                     cell4.innerHTML = end;
+                    // let cell5 = row.insertCell(5);
+                    // cell5.innerHTML = (data.activated==1)?'Y':'N' ;
                     let cell5 = row.insertCell(5);
-                    cell5.innerHTML = (data.activated==1)?'Y':'N' ;
+                    let isChecked = (data.activated == 1) ? 'checked' : '';
+                    cell5.innerHTML = `
+                        <input type="checkbox" ${isChecked} 
+                            onchange="toggleActivated('${data.id}', ${data.start_date ? `'${data.start_date}'` : 'null'}, this.checked)">
+                    `;
                 }
                 
             }
+
+            function toggleActivated(fundId, startDate, newStatus) {
+                const URL = HOME_URL + '/amc/toggleActivated'; // ✅ เปลี่ยน URL ให้ตรงกับ backend ของคุณ
+
+                fetch(URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fund_id: fundId,
+                        start_date: startDate,
+                        activated: newStatus ? 1 : 0
+                    })
+                }).then(response => response.json())
+                .then(data => {
+                    console.log("Updated activated status:", data);
+                }).catch(err => {
+                    console.error("Error updating activated status:", err);
+                    alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ");
+                });
+            }
+            
             function removeRows(table_id) {
                 let table = document.getElementById(table_id);
                 if(table.rows.length > 1){
@@ -137,7 +164,7 @@
                 let table = document.getElementById(table_id);                
                 let row = table.insertRow(table.rows.length);
                 let cell0 = row.insertCell(0);
-                cell0.colSpan = "5";
+                cell0.colSpan = "6";
                 cell0.innerHTML = "no data..";
                 cell0.style.textAlign = "center";
             }

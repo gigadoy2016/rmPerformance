@@ -289,4 +289,23 @@ router.post('/newFundCode',async (req, res) => {
   }
 });
 
+router.post('/toggleActivated',async (req, res) => {
+  D.debugLog("== amc.js toggleActivated() ==");
+  const { fund_id, start_date,activated } = req.body;
+  console.log('Received toggle:', req.body);
+  const date =new Date();
+  const formattedDate = date.toISOString();
+  console.log(formattedDate);
+  try{
+    const sql = `UPDATE fund_sharing SET activated = ?, last_update= NOW() WHERE id = ?`;
+    const values = [activated, fund_id];
+    const [result] = await dbConnection.query(sql, values);
+
+    // สมมุติว่า update สำเร็จ
+    res.json({ message: 'Fund updated',result:result });
+  }catch(e){
+    console.log(e);
+    res.status(500).json({ message: 'Error updating fund' });
+  }
+});
 module.exports = router;
