@@ -125,7 +125,7 @@ router.get('/list',async function (req, res) {
 router.get('/sharing/:id',async function(req, res, next) {
   D.debugLog("== amc.js /sharing == Line 82");
   let id = req.params.id;
-  let SQL = "SELECT * FROM fund_sharing WHERE amc_id='"+id+"' ORDER BY start_date DESC;"
+  let SQL = "SELECT * FROM fund_sharing WHERE amc_id='"+id+"' AND activated = 1 ORDER BY start_date DESC;"
   console.log(SQL);
   let data = [];
   try{
@@ -169,7 +169,7 @@ router.get('/sharing2/month/:m/:y',async function(req, res, next) {
   D.debugLog("== amc.js /sharing2 ==");
   let m = req.params.m;
   let y = req.params.y;
-  let SQL = "SELECT * FROM fund_sharing WHERE `month`='"+m+"' AND `year`='"+y+"';"
+  let SQL = "SELECT * FROM fund_sharing WHERE activated=1 AND `month`='"+m+"' AND `year`='"+y+"';"
   let data = [];
   try{
     console.log(SQL);
